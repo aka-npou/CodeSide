@@ -70,6 +70,8 @@ public class Strategy_v2 extends AkaNpouStrategy {
                 u.jumpState.speed /= Constants.TICKS_PER_SECOND;
             }
 
+            //Dodge.getFutureBullets(game, unit, debug);
+
             currentTick=game.getCurrentTick();
         }
 
@@ -150,29 +152,90 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         s = System.nanoTime();
         if (unitStatus!=UnitStatus.Mine)
-            shoot.canShoot(unit, nearestEnemy, debug, action, game);
+            shoot.canShoot(unit, nearestEnemy, debug, action, game, unit.position);
         f = System.nanoTime();
         System.out.println("shoot " + (f-s));
 
+
+        drawAll(unit, game, debug);
 
         return action;
     }
 
     private void wait(Unit unit, Game game, Debug debug, UnitAction action) {
 
+        mI=-1;
+
         int minHit=10000;
-        for (int h:Dodge.hits) {
+        for (int h:Dodge.futureHits) {
             if (h<minHit)
                 minHit=h;
         }
 
         Vec2Double minP = null;
 
-        for (int i=0;i<Dodge.hits.length;i++) {
-            if (Dodge.hits[i]==minHit) {
-                minP = Sim_v3.steps[i][0];
-                mI=i;
-                break;
+        Vec2Double unitP;
+        double dx,dy;
+        boolean curShoot;
+
+        for (int i=0;i<Dodge.futureHits.length;i++) {
+            if (Dodge.futureHits[i]==minHit) {
+
+                unitP = new Vec2Double();
+                dx = (nearestEnemy.position.x - Sim_v3.steps[i][0].x);
+                dy = (nearestEnemy.position.y - Sim_v3.steps[i][0].y);
+
+                unitP.x = Sim_v3.steps[i][0].x;
+                unitP.y = Sim_v3.steps[i][0].y+Constants.UNIT_H2;
+
+                curShoot = shoot.checkShoot(dx, dy, nearestEnemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                if (curShoot) {
+                    minP = Sim_v3.steps[i][0];
+                    mI=i;
+                    break;
+                }
+
+                unitP = new Vec2Double();
+                dx = (nearestEnemy.position.x - Sim_v3.steps[i][6].x);
+                dy = (nearestEnemy.position.y - Sim_v3.steps[i][6].y);
+
+                unitP.x = Sim_v3.steps[i][6].x;
+                unitP.y = Sim_v3.steps[i][6].y+Constants.UNIT_H2;
+
+                curShoot = shoot.checkShoot(dx, dy, nearestEnemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                if (curShoot) {
+                    minP = Sim_v3.steps[i][0];
+                    mI=i;
+                    break;
+                }
+
+                unitP = new Vec2Double();
+                dx = (nearestEnemy.position.x - Sim_v3.steps[i][36].x);
+                dy = (nearestEnemy.position.y - Sim_v3.steps[i][36].y);
+
+                unitP.x = Sim_v3.steps[i][36].x;
+                unitP.y = Sim_v3.steps[i][36].y+Constants.UNIT_H2;
+
+                curShoot = shoot.checkShoot(dx, dy, nearestEnemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                if (curShoot) {
+                    minP = Sim_v3.steps[i][0];
+                    mI=i;
+                    break;
+                }
+
+            }
+        }
+
+        if (mI==-1) {
+            for (int i=0;i<Dodge.futureHits.length;i++) {
+                if (Dodge.futureHits[i] == minHit) {
+                    minP = Sim_v3.steps[i][0];
+                    mI=i;
+                    break;
+                }
             }
         }
 
@@ -181,7 +244,8 @@ public class Strategy_v2 extends AkaNpouStrategy {
         if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jump=true;
 
-        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d && Sim_v3.steps[mI][2].y<Sim_v3.steps[mI][1].y)
+        //if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d && Sim_v3.steps[mI][2].y<Sim_v3.steps[mI][1].y)
+        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
 
     }
@@ -425,18 +489,21 @@ public class Strategy_v2 extends AkaNpouStrategy {
     }
 
     private void dodge(Unit unit, Game game, Debug debug, UnitAction action) {
-        Dodge.dodge(unit, game, debug, action);
+        //Dodge.dodge(unit, game, debug, action, false, Dodge.bullets, game.getBullets());
+        Dodge.getFutureBullets(game, unit, debug);
+        //Dodge.dodge(unit, game, debug, true, Dodge.bulletsV, Dodge.bulletsP);
     }
+
 
     private boolean enemyNearly(Unit unit, Game game, Debug debug) {
 
-        return distanceSqr(unit.position, nearestEnemy.position) < 49;
+        return distanceSqr(unit.position, nearestEnemy.position) < 64;
 
     }
 
     private boolean enemyFar(Unit unit, Game game, Debug debug) {
 
-        return distanceSqr(unit.position, nearestEnemy.position) >= 81;
+        return distanceSqr(unit.position, nearestEnemy.position) >= 100;
     }
 
     private void getNearestEnemy(Unit unit, Game game, Debug debug) {
@@ -520,8 +587,27 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
     }
 
+    private void drawAll(Unit unit, Game game, Debug debug) {
+        if (Constants.ON_DEBUG) {
+            System.out.println("tick " + game.getCurrentTick());
+            System.out.println(unit);
+        }
+
+        if (Constants.ON_DEBUG) {
+            for (Bullet b : game.getBullets()) {
+                debug.draw(new CustomData.Line(new Vec2Float( b.position.x,  b.position.y),
+                        new Vec2Float( b.position.x +  b.velocity.x,  b.position.y +  b.velocity.y),
+                        0.1f, new ColorFloat(0, 128, 0, 255)));
+            }
+
+            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x-Constants.UNIT_W2, unit.position.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,1,1,0.5f)));
+        }
+    }
+
 
     Vec2Double getP(Vec2Double targetPosition, Unit unit, Game game, Debug debug, UnitAction action, boolean goTo, Unit enemy) {
+
+        mI=-1;
 
         //выбирать те, где не надо падать или прыгать
         if (enemy==null) {
@@ -580,7 +666,8 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         int minHit=10000;
-        for (int h:Dodge.hits) {
+        //for (int h:Dodge.hits) {
+        for (int h:Dodge.futureHits) {
             if (h<minHit)
                 minHit=h;
         }
@@ -591,22 +678,185 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         Vec2Double firstStep = null;
 
+        Vec2Double unitP;
+        double dx,dy;
+        boolean curShoot;
+
         for (int i = 0; i < arrayML.length; i++) {
-            if (Dodge.hits[i] == minHit) {
+            //if (Dodge.hits[i] == minHit) {
+            if (Dodge.futureHits[i] == minHit) {
                 if (mI == -1) {
-                    mI = i;
-                    mTick = arrayTL[i];
+                    if (enemy!=null) {
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][0].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][0].y);
+
+                        unitP.x = Sim_v3.steps[i][0].x;
+                        unitP.y = Sim_v3.steps[i][0].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][6].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][6].y);
+
+                        unitP.x = Sim_v3.steps[i][6].x;
+                        unitP.y = Sim_v3.steps[i][6].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][36].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][36].y);
+
+                        unitP.x = Sim_v3.steps[i][36].x;
+                        unitP.y = Sim_v3.steps[i][36].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                    } else {
+                        mI = i;
+                        mTick = arrayTL[i];
+
+                        continue;
+                    }
 
                     continue;
                 }
 
                 if (goTo && arrayML[i] < arrayML[mI] || !goTo && arrayML[i] > arrayML[mI]) {
-                    mI = i;
-                    mTick = arrayTL[i];
-                } else if (arrayML[i] == arrayML[mI]) {
-                    if (arrayTL[i] < mTick) {
+                    if (enemy!=null) {
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][0].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][0].y);
+
+                        unitP.x = Sim_v3.steps[i][0].x;
+                        unitP.y = Sim_v3.steps[i][0].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][6].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][6].y);
+
+                        unitP.x = Sim_v3.steps[i][6].x;
+                        unitP.y = Sim_v3.steps[i][6].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                        unitP = new Vec2Double();
+                        dx = (enemy.position.x - Sim_v3.steps[i][36].x);
+                        dy = (enemy.position.y - Sim_v3.steps[i][36].y);
+
+                        unitP.x = Sim_v3.steps[i][36].x;
+                        unitP.y = Sim_v3.steps[i][36].y+Constants.UNIT_H2;
+
+                        curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                        if (curShoot) {
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                            continue;
+                        }
+
+                    } else {
                         mI = i;
                         mTick = arrayTL[i];
+                    }
+                } else if (arrayML[i] == arrayML[mI]) {
+                    if (arrayTL[i] < mTick) {
+                        if (enemy!=null) {
+
+                            unitP = new Vec2Double();
+                            dx = (enemy.position.x - Sim_v3.steps[i][0].x);
+                            dy = (enemy.position.y - Sim_v3.steps[i][0].y);
+
+                            unitP.x = Sim_v3.steps[i][0].x;
+                            unitP.y = Sim_v3.steps[i][0].y+Constants.UNIT_H2;
+
+                            curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                            if (curShoot) {
+                                mI = i;
+                                mTick = arrayTL[i];
+
+                                continue;
+                            }
+
+                            unitP = new Vec2Double();
+                            dx = (enemy.position.x - Sim_v3.steps[i][6].x);
+                            dy = (enemy.position.y - Sim_v3.steps[i][6].y);
+
+                            unitP.x = Sim_v3.steps[i][6].x;
+                            unitP.y = Sim_v3.steps[i][6].y+Constants.UNIT_H2;
+
+                            curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                            if (curShoot) {
+                                mI = i;
+                                mTick = arrayTL[i];
+
+                                continue;
+                            }
+
+                            unitP = new Vec2Double();
+                            dx = (enemy.position.x - Sim_v3.steps[i][36].x);
+                            dy = (enemy.position.y - Sim_v3.steps[i][36].y);
+
+                            unitP.x = Sim_v3.steps[i][36].x;
+                            unitP.y = Sim_v3.steps[i][36].y+Constants.UNIT_H2;
+
+                            curShoot = shoot.checkShoot(dx, dy, enemy, new Vec2Double(unitP.x, unitP.y), game, unit, debug, unitP);
+
+                            if (curShoot) {
+                                mI = i;
+                                mTick = arrayTL[i];
+
+                                continue;
+                            }
+
+                        } else {
+                            mI = i;
+                            mTick = arrayTL[i];
+                        }
                     }
                 }
             }
@@ -711,6 +961,36 @@ public class Strategy_v2 extends AkaNpouStrategy {
 //            }
 //
 //        }
+
+        if (mI==-1) {
+
+            for (int i = 0; i < arrayML.length; i++) {
+                //if (Dodge.hits[i] == minHit) {
+                if (Dodge.futureHits[i] == minHit) {
+                    if (mI == -1) {
+                        mI = i;
+                        mTick = arrayTL[i];
+
+                        continue;
+                    }
+
+                    if (goTo && arrayML[i] < arrayML[mI] || !goTo && arrayML[i] > arrayML[mI]) {
+
+                        mI = i;
+                        mTick = arrayTL[i];
+
+                    } else if (arrayML[i] == arrayML[mI]) {
+                        if (arrayTL[i] < mTick) {
+
+                            mI = i;
+                            mTick = arrayTL[i];
+
+                        }
+                    }
+                }
+            }
+
+        }
 
         firstStep = Sim_v3.steps[mI][0];
         if (Constants.ON_DEBUG)

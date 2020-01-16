@@ -13,7 +13,11 @@ public class Dodge {
 
     public static ArrayList<Vec2Double> bullets;
     public static int[] hits;
+    public static int[] _hits;
+    public static int[] futureHits;
     public static int[] hitsTicks;
+    public static Bullet[] bulletsP;
+    public static ArrayList<Vec2Double> bulletsV;
 
     public static void setBullets(Unit unit, Game game, Debug debug) {
 
@@ -33,12 +37,127 @@ public class Dodge {
 
     }
 
-    public static void dodge(Unit unit, Game game, Debug debug, UnitAction action) {
+    public static void getFutureBullets(Game game,Unit unit, Debug debug) {
+
+
+        futureHits = new int[Sim_v3.steps.length];
+
+        bulletsV = new ArrayList<>();
+
+        /*int s=0;
+        for (Unit u:game.getUnits()) {
+            if (u.playerId == unit.playerId)
+                continue;
+
+            if (u.weapon == null)
+                continue;
+
+            s++;
+
+        }*/
+
+        dodge_v4(unit, game, debug, false, bullets, game.getBullets(), 0, Sim_v3.ticks);
+
+        //bulletsP = new Bullet[s];
+        //проверяем по одной, если попали сюда то есть враг
+        bulletsP = new Bullet[1];
+
+        /*Vec2Double bpf;
+        for (int i=0;i<game.getBullets().length;i++) {
+            bulletsP[i]=game.getBullets()[i];
+            bpf = new Vec2Double(bulletsP[i].velocity.x/game.getProperties().getTicksPerSecond(), bulletsP[i].velocity.y/game.getProperties().getTicksPerSecond());
+            bulletsV.add(bpf);
+        }*/
+
+        bulletsV.add(new Vec2Double());
+        //if (s==0)
+        //    return;
+
+        //int i=0;
+
+        //todo надо смотреть с определенных точек и прицелы туда. но и смотреть чтобы можно было оттуда стрелять
+        for (Unit u:game.getUnits()) {
+            if (u.playerId==unit.playerId)
+                continue;
+
+            if (u.weapon==null)
+                continue;
+
+            Vec2Double t = new Vec2Double(unit.position.x-u.position.x, unit.position.y-u.position.y);
+
+            int dt = (int)(u.weapon.fireTimer==null?0:u.weapon.fireTimer/Constants.TICK);
+
+            double a = Math.atan2(t.y, t.x);
+
+            checkFuture(game,unit, u, debug, a, dt);
+
+            a+=u.weapon.spread/2d;
+
+            checkFuture(game,unit, u, debug, a, dt);
+
+            a+=u.weapon.spread/2d;
+
+            checkFuture(game,unit, u, debug, a, dt);
+
+            a-=u.weapon.spread*1.5d;
+
+            checkFuture(game,unit, u, debug, a, dt);
+
+            a-=u.weapon.spread/2d;
+
+            checkFuture(game,unit, u, debug, a, dt);
+            
+        }
+
+        for (int q=0;q<hits.length;q++) {
+            futureHits[q]+=hits[q];
+        }
+
+        System.out.println("FH------------------------");
+        for (int q=0;q<futureHits.length;q++) {
+            System.out.println("i="+q+" "+futureHits[q]);
+        }
+
+    }
+
+    static void checkFuture(Game game,Unit unit, Unit u, Debug debug, double a, int dt) {
+
+        Bullet bpf;
+        Vec2Double v;
+
+        bpf = new Bullet();
+
+        bpf.weaponType = u.weapon.typ;
+        bpf.unitId = u.id;
+        bpf.playerId = u.playerId;
+        bpf.position = new Vec2Double(u.position.x, u.position.y+Constants.UNIT_H2);
+
+        v = new Vec2Double(u.weapon.params.getBullet().speed*Math.cos(a), u.weapon.params.getBullet().speed*Math.sin(a));
+
+        if(Constants.ON_DEBUG)
+            debug.draw(new CustomData.Line(new Vec2Float(u.position.x, u.position.y+Constants.UNIT_H2), new Vec2Float(u.position.x+v.x*100, u.position.y+Constants.UNIT_H2+v.y*100), 0.1f, new ColorFloat(1,0,1,1)));
+
+        bpf.velocity = v;
+
+        bpf.damage = u.weapon.params.getBullet().getDamage();
+        bpf.size = u.weapon.params.getBullet().size;
+        bpf.explosionParams = game.getProperties().getWeaponParams().get(u.weapon.typ).getExplosion();
+
+        bulletsP[bulletsP.length-1]=bpf;
+
+        bulletsV.get(bulletsV.size()-1).x = bulletsP[bulletsP.length-1].velocity.x/game.getProperties().getTicksPerSecond();
+        bulletsV.get(bulletsV.size()-1).y = bulletsP[bulletsP.length-1].velocity.y/game.getProperties().getTicksPerSecond();
+
+        dodge_v4(unit, game, debug, true, bulletsV, bulletsP, dt, 1);
+
+    }
+
+    public static void dodge(Unit unit, Game game, Debug debug, boolean isFuture, ArrayList<Vec2Double> bulletsV, Bullet[] bulletsP) {
 
         //dodge_v1(unit, game, debug, action);
         //dodge_v2(unit, game, debug, action);
         //dodge_v3(unit, game, debug, action);
-        dodge_v4(unit, game, debug, action);
+        dodge_v4(unit, game, debug, isFuture, bulletsV, bulletsP, 0, Sim_v3.ticks);
 
     }
 
@@ -221,331 +340,177 @@ public class Dodge {
         return (v1*v2<0) && (v3*v4<0);
     }
 
-    //todo хранить все координаты приблизительно в инт до 5 знака и считать пули один раз их скорости
 
-    public static void dodge_v3(Unit unit, Game game, Debug debug, UnitAction action) {
+    public static void dodge_v4(Unit unit, Game game, Debug debug, boolean isFuture, ArrayList<Vec2Double> bulletsV, Bullet[] bulletsP, int dt, int to) {
 
-        int[] hits = new int[Sim_v3.steps.length];
-
-        //float tick_f;
-        int hit;
-        Vec2Double bullet = new Vec2Double();
-        Vec2Double u = new Vec2Double();
-
-
-        boolean neeedCheck=false;
-        for (int i=0;i<hits.length;i++) {
-
-            for (int b=0; b<bullets.size();b++) {
-
-                neeedCheck=false;
-
-                //выкинуть свои пули
-                if (game.getBullets()[b].unitId ==  unit.id && game.getBullets()[b].explosionParams == null)
-                    continue;
-
-                //if (distanceSqr(game.getBullets()[b].position.x, game.getBullets()[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
-                    //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
-                    if (game.getBullets()[b].position.x+4f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
-                        neeedCheck = true;
-
-                    if (game.getBullets()[b].position.x-4f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
-                        neeedCheck = true;
-
-                    if (game.getBullets()[b].position.y+4f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
-                        neeedCheck = true;
-
-                    if (game.getBullets()[b].position.y-4f < unit.position.y && Dodge.bullets.get(b).y > 0)
-                        neeedCheck = true;
-                //}
-
-                if (!neeedCheck)
-                    continue;
-
-                //tick_f=1f;
-
-                bullet.x = game.getBullets()[b].position.x;
-                bullet.y = game.getBullets()[b].position.y;
-
-                u.x = unit.position.x;
-                u.y = unit.position.y;
-
-                for (Vec2Double p:Sim_v3.steps[i]) {
-
-                    hit = checkHit(bullet.x,
-                            bullet.y,
-                            u.x,
-                            u.y, game.getBullets()[b].size/2d);
-
-                    if (hit == 0)
-                        hit = checkHit(bullet.x+bullets.get(b).x,
-                                bullet.y+bullets.get(b).y,
-                                u.x,
-                                u.y, game.getBullets()[b].size/2d);
-
-                    if (hit == 0)
-                        hit = checkHit(bullet.x+bullets.get(b).x,
-                                bullet.y+bullets.get(b).y,
-                                p.x,
-                                p.y, game.getBullets()[b].size/2d);
-
-
-                    if (hit == 0)
-                        hit=checkHitFlow(bullet.x, bullet.y, u.x, u.y,
-                            bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y, game.getBullets()[b].size);
-
-                    if (hit==1 && Constants.ON_DEBUG) {
-                        debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
-                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
-                    }
-                    hits[i]+=hit*game.getBullets()[b].damage;
-
-                    if(hit==1 && game.getBullets()[b].explosionParams != null) {
-                        hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
-                    }
-
-                    //bullet.x = game.getBullets()[b].position.x + bullets.get(b).x * tick_f;
-                    //bullet.y = game.getBullets()[b].position.y + bullets.get(b).y * tick_f;
-
-                    bullet.x+=bullets.get(b).x;
-                    bullet.y+=bullets.get(b).y;
-
-                    if (Constants.ON_DEBUG)
-                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(0,0,1,0.5f)));
-
-                    //проверить что пуля в стене
-                    //может на тик раньше быть в стене и взрыв
-                    //if (World.map[(int)bullet.y][(int)bullet.x] == 1) {
-                    if (World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1) {
-                        //если взрывная, то урон
-                        if (game.getBullets()[b].explosionParams != null) {
-
-                            hit = checkHit(bullet.x,
-                                    bullet.y,
-                                    u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
-
-                            hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
-
-                            if (hit==1 && Constants.ON_DEBUG) {
-                                debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
-                                debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
-                            }
-                        }
-
-                        if (Constants.ON_DEBUG)
-                            debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(1,0,0,0.5f)));
-
-                        break;
-                    }
-
-                    u.x=p.x;
-                    u.y=p.y;
-
-                    //tick_f++;
-                }
-
-            }
-
-            if (Constants.ON_DEBUG)
-                System.out.println("hit " + i + " " + hits[i]);
-
+        if (isFuture) {
+            //futureHits = new int[Sim_v3.steps.length];
+            _hits=futureHits;
+        } else {
+            hits = new int[Sim_v3.steps.length];
+            _hits=hits;
         }
 
-        int minHits=1000;
-        Vec2Double p = null;
-        int minI = -1;
 
-        for (int i=0;i<hits.length;i++) {
-
-            if (p==null) {
-                p=Sim_v3.steps[i][0];
-                minHits=hits[i];
-                minI=i;
-            } else {
-                if (minHits>hits[i]) {
-                    p=Sim_v3.steps[i][0];
-                    minHits=hits[i];
-                    minI=i;
-                }
-            }
-
-        }
-
-        action.setVelocity((p.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        /*if (p.y>unit.position.y)
-            action.jump=true;
-
-        if (p.y<unit.position.y)
-            action.jumpDown=true;*/
-
-        if (p.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
-            action.jump=true;
-
-        if (p.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
-            action.jumpDown=true;
-
-        if (Constants.ON_DEBUG)
-            debug.draw(new CustomData.Log("go to " + minI));
-
-    }
-
-
-    public static void dodge_v4(Unit unit, Game game, Debug debug, UnitAction action) {
-
-        hits = new int[Sim_v3.steps.length];
         hitsTicks = new int[Sim_v3.steps.length];
 
-        //float tick_f;
-        int hit;
-        Vec2Double bullet = new Vec2Double();
-        Vec2Double u = new Vec2Double();
 
         //todo возможно проверять расстояние до центра юнита и если менее чего-то то уже точнее
 
         //todo можно еще смотреть какой урон будет вокруг всем при ракете, может надо и лицом поймать
+
+        for (int i=0;i<_hits.length;i++) {
+
+            checkBullets(unit, game, debug, isFuture, bulletsV, bulletsP, dt, to, i);
+//            if (Constants.ON_DEBUG)
+//                System.out.println("hit " + i + " " + _hits[i]);
+
+        }
+
+    }
+
+    private static void checkBullets(Unit unit, Game game, Debug debug, boolean isFuture, ArrayList<Vec2Double> bulletsV, Bullet[] bulletsP, int dt, int to, int i) {
+
+        int hit;
+        Vec2Double bullet = new Vec2Double();
+        Vec2Double u = new Vec2Double();
+
         boolean neeedCheck=false;
         int tick;
-        for (int i=0;i<hits.length;i++) {
+        Vec2Double p;
 
-            for (int b=0; b<bullets.size();b++) {
+        for (int b=0; b<bulletsV.size();b++) {
 
-                neeedCheck=false;
+            neeedCheck=false;
 
-                //выкинуть свои пули
-                if (game.getBullets()[b].unitId ==  unit.id && game.getBullets()[b].explosionParams == null)
-                    continue;
+            //выкинуть свои пули
+            if (bulletsP[b].unitId == unit.id && bulletsP[b].explosionParams == null)
+                continue;
 
-                //if (distanceSqr(game.getBullets()[b].position.x, game.getBullets()[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
-                //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
-                if (game.getBullets()[b].position.x+4f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
-                    neeedCheck = true;
+            //if (distanceSqr(bulletsP[b].position.x, bulletsP[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
+            //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
+            if (bulletsP[b].position.x+4f > unit.position.x + Constants.UNIT_W2 && bulletsV.get(b).x < 0)
+                neeedCheck = true;
 
-                if (game.getBullets()[b].position.x-4f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
-                    neeedCheck = true;
+            if (bulletsP[b].position.x-4f < unit.position.x - Constants.UNIT_W2 && bulletsV.get(b).x > 0)
+                neeedCheck = true;
 
-                if (game.getBullets()[b].position.y+4f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
-                    neeedCheck = true;
+            if (bulletsP[b].position.y+4f > unit.position.y + Constants.UNIT_H && bulletsV.get(b).y < 0)
+                neeedCheck = true;
 
-                if (game.getBullets()[b].position.y-4f < unit.position.y && Dodge.bullets.get(b).y > 0)
-                    neeedCheck = true;
-                //}
+            if (bulletsP[b].position.y-4f < unit.position.y && bulletsV.get(b).y > 0)
+                neeedCheck = true;
+            //}
 
-                if (!neeedCheck)
-                    continue;
+            if (!neeedCheck)
+                continue;
 
-                //tick_f=1f;
+            //tick_f=1f;
 
-                bullet.x = game.getBullets()[b].position.x;
-                bullet.y = game.getBullets()[b].position.y;
+            bullet.x = bulletsP[b].position.x;
+            bullet.y = bulletsP[b].position.y;
 
-                u.x = unit.position.x;
-                u.y = unit.position.y;
+            u.x = unit.position.x;
+            u.y = unit.position.y;
 
-                tick=1;
-                for (Vec2Double p:Sim_v3.steps[i]) {
+            tick=1;
+            //for (Vec2Double p:Sim_v3.steps[i]) {
+            for (int j=dt; j<to;j++) {
+                p=Sim_v3.steps[i][j];
 
-                    hit = checkHit(bullet.x,
-                            bullet.y,
+                hit = checkHit(bullet.x,
+                        bullet.y,
+                        u.x,
+                        u.y, bulletsP[b].size/2d*1.1d);
+
+                if (hit == 0)
+                    hit = checkHit(bullet.x+bulletsV.get(b).x,
+                            bullet.y+bulletsV.get(b).y,
                             u.x,
-                            u.y, game.getBullets()[b].size/2d*1.1d);
+                            u.y, bulletsP[b].size/2d*1.1d);
 
-                    if (hit == 0)
-                        hit = checkHit(bullet.x+bullets.get(b).x,
-                                bullet.y+bullets.get(b).y,
-                                u.x,
-                                u.y, game.getBullets()[b].size/2d*1.1d);
-
-                    if (hit == 0)
-                        hit = checkHit(bullet.x+bullets.get(b).x,
-                                bullet.y+bullets.get(b).y,
-                                p.x,
-                                p.y, game.getBullets()[b].size/2d*1.1d);
+                if (hit == 0)
+                    hit = checkHit(bullet.x+bulletsV.get(b).x,
+                            bullet.y+bulletsV.get(b).y,
+                            p.x,
+                            p.y, bulletsP[b].size/2d*1.1d);
 
 
-                    if (hit == 0)
-                        hit=checkHitFlow(bullet.x, bullet.y, u.x, u.y,
-                                bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y, game.getBullets()[b].size);
+                if (hit == 0)
+                    hit=checkHitFlow(bullet.x, bullet.y, u.x, u.y,
+                            bullet.x+bulletsV.get(b).x, bullet.y+bulletsV.get(b).y, p.x, p.y, bulletsP[b].size);
 
-                    if (hit==1 && Constants.ON_DEBUG) {
-                        debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
-                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
-                    }
-                    hits[i]+=hit*game.getBullets()[b].damage;
+                if (hit==1 && Constants.ON_DEBUG) {
+                    debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
+                    debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
+                }
+                _hits[i]+=hit*bulletsP[b].damage*(isFuture?1:10);
 
-                    if(hit==1 && game.getBullets()[b].explosionParams != null) {
-                        hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
-                    }
-
-                    //bullet.x = game.getBullets()[b].position.x + bullets.get(b).x * tick_f;
-                    //bullet.y = game.getBullets()[b].position.y + bullets.get(b).y * tick_f;
-
-                    bullet.x+=bullets.get(b).x;
-                    bullet.y+=bullets.get(b).y;
-
-                    if (Constants.ON_DEBUG)
-                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(0,0,1,0.5f)));
-
-                    //todo возмоно при попадании дальше не смотреть
-                    if (hit==1) {
-                        if (hitsTicks[i]>tick)
-                            hitsTicks[i]=tick;
-
-                        break;
-                    }
-
-                    //проверить что пуля в стене
-                    //может на тик раньше быть в стене и взрыв
-                    //if (World.map[(int)bullet.y][(int)bullet.x] == 1) {
-                    if (World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
-                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1) {
-                        //если взрывная, то урон
-                        if (game.getBullets()[b].explosionParams != null) {
-
-                            //todo смотреть глубину в стене и отнимать и от нее центр взрыва
-                            //смотрим текущие и следующее положение может быть в промежутке взрыв
-                            hit = checkHit(bullet.x,
-                                    bullet.y,
-                                    u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
-
-                            if (hit==0)
-                                hit = checkHit(bullet.x,
-                                        bullet.y,
-                                        p.x,
-                                        p.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
-
-                            hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
-
-                            if (hit==1 && Constants.ON_DEBUG) {
-                                debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
-                                debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
-                            }
-                        }
-
-                        if (Constants.ON_DEBUG)
-                            debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(1,0,0,0.5f)));
-
-                        break;
-                    }
-
-                    u.x=p.x;
-                    u.y=p.y;
-
-                    //tick_f++;
-                    tick++;
+                if(hit==1 && bulletsP[b].explosionParams != null) {
+                    _hits[i]+=hit*bulletsP[b].explosionParams.getDamage()*(isFuture?1:10);
                 }
 
+                //bullet.x = game.getBullets()[b].position.x + bulletsV.get(b).x * tick_f;
+                //bullet.y = game.getBullets()[b].position.y + bulletsV.get(b).y * tick_f;
 
+                bullet.x+=bulletsV.get(b).x;
+                bullet.y+=bulletsV.get(b).y;
+
+                if (Constants.ON_DEBUG)
+                    debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-bulletsP[b].size/2f, bullet.y - bulletsP[b].size/2f), new Vec2Float(bulletsP[b].size, bulletsP[b].size), new ColorFloat(0,0,1,0.5f)));
+
+                //todo возмоно при попадании дальше не смотреть
+                if (hit==1) {
+                    if (hitsTicks[i]>tick)
+                        hitsTicks[i]=tick;
+
+                    break;
+                }
+
+                //проверить что пуля в стене
+                //может на тик раньше быть в стене и взрыв
+                //if (World.map[(int)bullet.y][(int)bullet.x] == 1) {
+                if (World.map[(int)(bullet.y-bulletsP[b].size/2f)][(int)(bullet.x-bulletsP[b].size/2f)] == 1
+                        || World.map[(int)(bullet.y-bulletsP[b].size/2f)][(int)(bullet.x+bulletsP[b].size/2f)] == 1
+                        || World.map[(int)(bullet.y+bulletsP[b].size/2f)][(int)(bullet.x-bulletsP[b].size/2f)] == 1
+                        || World.map[(int)(bullet.y+bulletsP[b].size/2f)][(int)(bullet.x+bulletsP[b].size/2f)] == 1) {
+                    //если взрывная, то урон
+                    if (bulletsP[b].explosionParams != null) {
+
+                        //todo смотреть глубину в стене и отнимать и от нее центр взрыва
+                        //смотрим текущие и следующее положение может быть в промежутке взрыв
+                        hit = checkHit(bullet.x,
+                                bullet.y,
+                                u.x,
+                                u.y, bulletsP[b].explosionParams.getRadius()+bulletsP[b].size/2d);
+
+                        if (hit==0)
+                            hit = checkHit(bullet.x,
+                                    bullet.y,
+                                    p.x,
+                                    p.y, bulletsP[b].explosionParams.getRadius()+bulletsP[b].size/2d);
+
+                        _hits[i]+=hit*bulletsP[b].explosionParams.getDamage()*(isFuture?1:10);
+
+                        if (hit==1 && Constants.ON_DEBUG) {
+                            debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
+                            debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
+                        }
+                    }
+
+                    if (Constants.ON_DEBUG)
+                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-bulletsP[b].size/2f, bullet.y - bulletsP[b].size/2f), new Vec2Float(bulletsP[b].size, bulletsP[b].size), new ColorFloat(1,0,0,0.5f)));
+
+                    break;
+                }
+
+                u.x=p.x;
+                u.y=p.y;
+
+                //tick_f++;
+                tick++;
             }
 
-            if (Constants.ON_DEBUG)
-                System.out.println("hit " + i + " " + hits[i]);
 
         }
 
