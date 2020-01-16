@@ -150,19 +150,28 @@ public class Sim_v3 {
 
             }
 
-            for (Unit u:game.getUnits()) {
-                if (u.id == unit.id)
-                    continue;
+            if (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)] == 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x-Constants.UNIT_W2)] == 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+vx+Constants.UNIT_W2)] == 1) {
 
-                if (p.x+vx+Constants.UNIT_W2>=u.position.x-Constants.UNIT_W2 && p.x+vx+Constants.UNIT_W2<=u.position.x+Constants.UNIT_W2
-                        &&
-                        ((p.y>=u.position.y && p.y<=u.position.y+Constants.UNIT_H)
-                        ||
-                        (p.y+Constants.UNIT_H>=u.position.y && p.y+Constants.UNIT_H<=u.position.y+Constants.UNIT_H))) {
-                    dx=0d;
-                    break;
-                }
+                dx=0d;
+
             }
+
+            if (dx!=0)
+                for (Unit u:game.getUnits()) {
+                    if (u.id == unit.id)
+                        continue;
+
+                    if (p.x+vx+Constants.UNIT_W2>=u.position.x-Constants.UNIT_W2 && p.x+vx+Constants.UNIT_W2<=u.position.x+Constants.UNIT_W2
+                            &&
+                            ((p.y>=u.position.y && p.y<=u.position.y+Constants.UNIT_H)
+                            ||
+                            (p.y+Constants.UNIT_H>=u.position.y && p.y+Constants.UNIT_H<=u.position.y+Constants.UNIT_H))) {
+                        dx=0d;
+                        break;
+                    }
+                }
         }
 
         if (dx<0) {
@@ -174,19 +183,28 @@ public class Sim_v3 {
 
             }
 
-            for (Unit u:game.getUnits()) {
-                if (u.id == unit.id)
-                    continue;
+            if (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)] == 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x-Constants.UNIT_W2)] == 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+vx-Constants.UNIT_W2)] == 1) {
 
-                if (p.x+vx-Constants.UNIT_W2>=u.position.x-Constants.UNIT_W2 && p.x+vx-Constants.UNIT_W2<=u.position.x+Constants.UNIT_W2
-                        &&
-                        ((p.y>=u.position.y && p.y<=u.position.y+Constants.UNIT_H)
-                                ||
-                                (p.y+Constants.UNIT_H>=u.position.y && p.y+Constants.UNIT_H<=u.position.y+Constants.UNIT_H))) {
-                    dx=0d;
-                    break;
-                }
+                dx=0d;
+
             }
+
+            if (dx!=0)
+                for (Unit u:game.getUnits()) {
+                    if (u.id == unit.id)
+                        continue;
+
+                    if (p.x+vx-Constants.UNIT_W2>=u.position.x-Constants.UNIT_W2 && p.x+vx-Constants.UNIT_W2<=u.position.x+Constants.UNIT_W2
+                            &&
+                            ((p.y>=u.position.y && p.y<=u.position.y+Constants.UNIT_H)
+                                    ||
+                                    (p.y+Constants.UNIT_H>=u.position.y && p.y+Constants.UNIT_H<=u.position.y+Constants.UNIT_H))) {
+                        dx=0d;
+                        break;
+                    }
+                }
         }
         p.x+=dx;
 

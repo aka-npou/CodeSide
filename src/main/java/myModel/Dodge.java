@@ -68,57 +68,97 @@ public class Dodge {
     //a c b d
     private static int checkHitFlow(double bx1, double by1, double ux1, double uy1,
                                     double bx2, double by2, double ux2, double uy2, double sizeB) {
-        //
-        if (checkHitBoxes(bx1+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+
+        if (checkHitBoxes(ux1-Constants.UNIT_W2, uy1,bx1+sizeB/2d, by1+sizeB/2d, bx2+sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1+Constants.UNIT_W2, uy1,bx1-sizeB/2d, by1+sizeB/2d, bx2-sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H,bx1+sizeB/2d, by1-sizeB/2d, bx2+sizeB/2d, by2-sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H,bx1-sizeB/2d, by1-sizeB/2d, bx2-sizeB/2d, by2-sizeB/2d)==1)
             return 1;
 
-        if (checkHitBoxes(bx1-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+        if (checkHitBoxes(ux1-Constants.UNIT_W2, uy2,bx1+sizeB/2d, by1+sizeB/2d, bx2+sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1+Constants.UNIT_W2, uy2,bx1-sizeB/2d, by1+sizeB/2d, bx2-sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1-Constants.UNIT_W2, uy2+Constants.UNIT_H,bx1+sizeB/2d, by1-sizeB/2d, bx2+sizeB/2d, by2-sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux1+Constants.UNIT_W2, uy2+Constants.UNIT_H,bx1-sizeB/2d, by1-sizeB/2d, bx2-sizeB/2d, by2-sizeB/2d)==1)
             return 1;
 
-        if (checkHitBoxes(bx1+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+        if (checkHitBoxes(ux2-Constants.UNIT_W2, uy1,bx1+sizeB/2d, by1+sizeB/2d, bx2+sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2+Constants.UNIT_W2, uy1,bx1-sizeB/2d, by1+sizeB/2d, bx2-sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2-Constants.UNIT_W2, uy1+Constants.UNIT_H,bx1+sizeB/2d, by1-sizeB/2d, bx2+sizeB/2d, by2-sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2+Constants.UNIT_W2, uy1+Constants.UNIT_H,bx1-sizeB/2d, by1-sizeB/2d, bx2-sizeB/2d, by2-sizeB/2d)==1)
             return 1;
 
-        if (checkHitBoxes(bx1-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+        if (checkHitBoxes(ux2-Constants.UNIT_W2, uy2,bx1+sizeB/2d, by1+sizeB/2d, bx2+sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2+Constants.UNIT_W2, uy2,bx1-sizeB/2d, by1+sizeB/2d, bx2-sizeB/2d, by2+sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H,bx1+sizeB/2d, by1-sizeB/2d, bx2+sizeB/2d, by2-sizeB/2d)==1)
+            return 1;
+        if (checkHitBoxes(ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H,bx1-sizeB/2d, by1-sizeB/2d, bx2-sizeB/2d, by2-sizeB/2d)==1)
             return 1;
 
-        //
-        if (checkHitBoxes(bx1+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
-            return 1;
+//        //
+//        if (checkHitBoxes(bx1+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        //
+//        if (checkHitBoxes(bx1+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx1-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        //
+//        if (checkHitBoxes(bx2+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        //
+//        if (checkHitBoxes(bx2+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
+//
+//        if (checkHitBoxes(bx2-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+//            return 1;
 
-        if (checkHitBoxes(bx1-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
-            return 1;
+        //todo для стоячего надо в обратную сторону проверять
 
-        if (checkHitBoxes(bx1+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
-
-        if (checkHitBoxes(bx1-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
-
-        //
-        if (checkHitBoxes(bx2+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
-
-        //
-        if (checkHitBoxes(bx2+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
-
-        if (checkHitBoxes(bx2-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
-            return 1;
 
         double border=0.1;
         //проверка линии пули с первым положением
@@ -444,6 +484,10 @@ public class Dodge {
 
                     if (Constants.ON_DEBUG)
                         debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(0,0,1,0.5f)));
+
+                    //todo возмоно при попадании дальше не смотреть
+                    if (hit==1)
+                        break;
 
                     //проверить что пуля в стене
                     //может на тик раньше быть в стене и взрыв
