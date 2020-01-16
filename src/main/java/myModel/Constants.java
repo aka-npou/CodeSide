@@ -11,7 +11,7 @@ public class Constants {
     public static boolean INIT=true;
 
     public static final double EPS = 0.000000001d;
-    public static final int STOP_TICK = 188;
+    public static final int STOP_TICK = 986;
     public static final double UNIT_H = 1.8d;
     public static final double UNIT_H2 = 1.8d/2d;
     public static final double UNIT_W = 0.9d;

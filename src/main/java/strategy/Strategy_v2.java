@@ -448,6 +448,25 @@ public class Strategy_v2 extends AkaNpouStrategy {
                     nearestEnemy = other;
             }
         }
+
+        if (Constants.is2x2) {
+            Unit ne2 = null;
+            for (Unit other : game.getUnits()) {
+                if (other.getPlayerId() != unit.getPlayerId() && nearestEnemy.id!=other.id) {
+                    ne2=other;
+                    break;
+                }
+            }
+
+            //второй есть
+            if (ne2!=null) {
+                if (ne2.health<nearestEnemy.health) {
+                    if (Math.abs(Math.sqrt(distanceSqr(unit.position, nearestEnemy.position))-Math.sqrt(distanceSqr(unit.position, ne2.position)))<=4) {
+                        nearestEnemy=ne2;
+                    }
+                }
+            }
+        }
     }
 
     private void drawSomething(Unit unit, Game game, Debug debug) {
@@ -562,6 +581,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
                 minHit=h;
         }
 
+        //todo если минимальный 50 и более(это ракета) то пытаемся подбить врагов и если я ближе к ракете
         mI=-1;
         int mTick=-1;
 
