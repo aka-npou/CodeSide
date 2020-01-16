@@ -171,6 +171,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         for (int i=0;i<Dodge.hits.length;i++) {
             if (Dodge.hits[i]==minHit) {
                 minP = Sim_v3.steps[i][0];
+                mI=i;
                 break;
             }
         }
