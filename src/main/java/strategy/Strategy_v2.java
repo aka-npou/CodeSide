@@ -330,6 +330,13 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
                 p.setX(p.x - v);
             }
+
+            for (int i=0;i<World.x;i++) {
+                debug.draw(new CustomData.PlacedText(""+i, new Vec2Float(i, World.y+0.5f), TextAlignment.CENTER,10f, new ColorFloat(1,1,1,1)));
+            }
+            for (int i=0;i<World.y;i++) {
+                debug.draw(new CustomData.PlacedText(""+i, new Vec2Float(World.x+0.5f, i), TextAlignment.CENTER,10f, new ColorFloat(1,1,1,1)));
+            }
         }
     }
 
@@ -375,7 +382,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
                     ps[i]=p;
 
                     if (Constants.ON_DEBUG)
-                        debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x, ps[i].y), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,1,1,0.5f)));
+                        debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x-0.05f, ps[i].y-0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,1,1,0.5f)));
 
                 }
                 tick++;
@@ -385,7 +392,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         if (Constants.ON_DEBUG) {
             for (int i=0;i<Sim_v3.steps.length;i++) {
                 System.out.println(i+ " l="+arrayML[i]+" t="+arrayTL[i]);
-                debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x, ps[i].y), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,1,1,1)));
+                debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x-0.05f, ps[i].y-0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,1,1,1)));
             }
         }
 

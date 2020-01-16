@@ -9,11 +9,14 @@ import myModel.*;
 public class Sim_v3 {
 
     public static int ticks = 120;
-    public static Vec2Double[][] steps = new Vec2Double[9+9][ticks];
+    public static Vec2Double[][] steps = new Vec2Double[9+9+9+9+9+9+9][ticks];
+    //public static double[][] stepsMT = new double[9+9][ticks];
 
     public static void  sim(Unit unit, Game game, Debug debug, UnitAction action) {
 
         //steps = new Vec2Double[9][ticks];
+
+        //todo в полете нельзя влево, тк упадешь за микротики
 
         chain(0, unit, unit.jumpState, unit.position, game, debug, action, 0, 0,0, true);
 
@@ -74,24 +77,57 @@ public class Sim_v3 {
                 return;
             }
             steps[chain][tick] = new Vec2Double(p.x, p.y);
+            //stepsMT[chain][tick] = jumpState.maxTime;
 
             if (Constants.ON_DEBUG)
                 if (tick%2==0)
-                    debug.draw(new CustomData.Rect(new Vec2Float(p.x+unit.id/10f, p.y+unit.id/10f), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
+                    //debug.draw(new CustomData.Rect(new Vec2Float(p.x+unit.id/10f, p.y+unit.id/10f), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
+                    debug.draw(new CustomData.Rect(new Vec2Float(p.x, p.y), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
 
-            /*if (tick == 1 && branch) {
-                for (int i=0;i<2;i++) {
+            if (tick == 2 && branch) {
+                for (int i=0;i<3;i++) {
                     steps[chain+9][i]=steps[chain][i];
                 }
-                chain(chain+9, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,2, false);
-            }*/
+                chain(chain+9, unit, jumpState, p, game, debug, action, 0, vy==1?-1:1,3, false);
+
+                for (int i=0;i<3;i++) {
+                    steps[chain+9+9][i]=steps[chain][i];
+                }
+                chain(chain+9+9, unit, jumpState, p, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, vy==1?-1:1,3, false);
+
+                for (int i=0;i<3;i++) {
+                    steps[chain+9+9+9][i]=steps[chain][i];
+                }
+                chain(chain+9+9+9, unit, jumpState, p, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, vy==1?-1:1,3, false);
+            }
 
             if (tick == 5 && branch) {
                 for (int i=0;i<6;i++) {
-                    steps[chain+9][i]=steps[chain][i];
+                    steps[chain+9+9+9+9][i]=steps[chain][i];
                 }
-                chain(chain+9, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,6, false);
+                chain(chain+9+9+9+9, unit, jumpState, p, game, debug, action, 0, vy==1?-1:1,6, false);
             }
+
+            if (tick == 5 && branch) {
+                for (int i=0;i<6;i++) {
+                    steps[chain+9+9+9+9+9][i]=steps[chain][i];
+                }
+                chain(chain+9+9+9+9+9, unit, jumpState, p, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, vy==1?-1:1,6, false);
+            }
+
+            if (tick == 5 && branch) {
+                for (int i=0;i<6;i++) {
+                    steps[chain+9+9+9+9+9+9][i]=steps[chain][i];
+                }
+                chain(chain+9+9+9+9+9+9, unit, jumpState, p, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, vy==1?-1:1,6, false);
+            }
+
+            /*if (tick == 35 && branch) {
+                for (int i=0;i<36;i++) {
+                    steps[chain+9+9+9][i]=steps[chain][i];
+                }
+                chain(chain+9+9+9, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,36, false);
+            }*/
         }
 
 
@@ -342,6 +378,7 @@ public class Sim_v3 {
                 p.y+=Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
             } else {
                 p.y += dy;
+                check(p, 1, (int)vy, jumpState, unit, game, debug, canSpeed, true);//вдруг мы на лестнице стоим
                 p.y += Constants.UNIT_H;
                 check(p, 1, (int)vy, jumpState, unit, game, debug, canSpeed, false);
                 p.y -= Constants.UNIT_H;
@@ -676,6 +713,9 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
+
+                if (vy==0)
+                    p.y+=Constants.UNIT_Y_SPEED_PER_TICK;
 
                 jumpState.maxTime = Constants.JUMP_TIME;
                 jumpState.canJump = true;

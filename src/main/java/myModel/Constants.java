@@ -10,7 +10,7 @@ public class Constants {
     public static final boolean LOCAL = false;
 
     public static final double EPS = 0.000000001d;
-    public static final int STOP_TICK = 91;
+    public static final int STOP_TICK = 1568;
     public static final double UNIT_H = 1.8d;
     public static final double UNIT_H2 = 1.8d/2d;
     public static final double UNIT_W = 0.9d;

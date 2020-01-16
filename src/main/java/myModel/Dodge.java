@@ -54,10 +54,11 @@ public class Dodge {
 
     private static int checkHitBoxes(double bx, double by, double ux1, double uy1, double ux2, double uy2) {
 
-        if (bx > Math.min(ux1, ux2) &&
-                bx < Math.max(ux1, ux2) &&
-                by > Math.min(uy1, uy2) &&
-                by < Math.max(uy1, uy2))
+        double b=0.005;
+        if (bx+bx*b >= Math.min(ux1, ux2) &&
+                bx-bx*b <= Math.max(ux1, ux2) &&
+                by+by*b >= Math.min(uy1, uy2) &&
+                by-by*b <= Math.max(uy1, uy2))
             return 1;
 
         return 0;
@@ -456,10 +457,15 @@ public class Dodge {
                         //если взрывная, то урон
                         if (game.getBullets()[b].explosionParams != null) {
 
-                            hit = checkHit(bullet.x,
+                            //todo смотреть глубину в стене и отнимать и от нее центр взрыва
+                            /*hit = checkHit(bullet.x,
                                     bullet.y,
                                     u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
+                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);*/
+                            hit = checkHit(bullet.x,
+                                    bullet.y,
+                                    p.x,
+                                    p.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
 
                             hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
 
