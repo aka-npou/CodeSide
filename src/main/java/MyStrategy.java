@@ -1,4 +1,5 @@
 import model.*;
+import myModel.Constants;
 import strategy.AkaNpouStrategy;
 import strategy.*;
 
@@ -12,7 +13,21 @@ public class MyStrategy {
 
     public UnitAction getAction(Unit unit, Game game, Debug debug) {
 
-        return akaNpouStrategy.getAction(unit, game, debug);
+        UnitAction action = akaNpouStrategy.getAction(unit, game, debug);
+
+        if (Constants.ON_DEBUG) {
+            debug.draw(new CustomData.Log("v="+action.velocity+
+                                               " j="+action.jump+
+                                               " jd="+action.jumpDown+
+                                               " r="+action.reload+
+                                               " s="+action.shoot+
+                                               " a="+action.aim.x+"/"+action.aim.y+
+                                               " w="+action.swapWeapon+
+                                               " m="+action.plantMine));
+            if (unit.weapon!=null)
+                debug.draw(new CustomData.Log("sp="+unit.weapon.spread+" la="+unit.weapon.lastAngle+" mb="+unit.weapon.magazine));
+        }
+        return action;
     }
 
 }

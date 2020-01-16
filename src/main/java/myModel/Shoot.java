@@ -9,6 +9,8 @@ public class Shoot {
 
     public CellChain[][] shootCells = new CellChain[5][5];
 
+    float ldx=0, ldy=0;
+
     public void setShootCells() {
 
         shootCells[4][4] = new CellChain();
@@ -334,11 +336,70 @@ public class Shoot {
             b.y+=v.y;
         }*/
 
-        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f);
+        //todo если старый угол в цели то не менять
+        //todo опережение еще добавить
+        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2);
         dx = (float) (enemy.getPosition().x - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+0.9f) - (unit.getPosition().y+0.9f));
+        dy = (float) ((enemy.getPosition().y+Constants.UNIT_H2) - (unit.getPosition().y+Constants.UNIT_H2));
 
-        l = (float) Math.sqrt(dx*dx + dy*dy);
+        if (unit.weapon!=null)
+            System.out.println("la="+unit.weapon.lastAngle+" sa="+Math.atan2(dy, dx));
+
+        if (unit.weapon!=null && ldx!=0 && ldy!=0) {
+
+            float d = (float) Math.sqrt(dx*dx+dy*dy);
+
+            float bx, by;
+            bx = b.x + dx;
+            by = b.y + ldy * dx/ldx;
+
+            bx = (float) (b.x + d*Math.cos(unit.weapon.lastAngle));
+            by = (float) (b.y + d*Math.sin(unit.weapon.lastAngle));
+
+            if (Constants.ON_DEBUG)
+                debug.draw(new CustomData.Line(new Vec2Float(bx, by), new Vec2Float(bx+0.1f, by+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
+
+            if (bx>=enemy.position.x-Constants.UNIT_W2
+                && bx<=enemy.position.x+Constants.UNIT_W2
+                && by>=enemy.position.y
+                && by<=enemy.position.y+Constants.UNIT_H) {
+
+                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
+
+                if (prevShoot) {
+                    dx = ldx;
+                    dy = ldy;
+
+                    System.out.println("last angel");
+                }
+
+                if (prevShoot || curShoot)
+                    action.setShoot(true);
+
+            } else {
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
+
+                if (curShoot) {
+                    action.setShoot(true);
+                }
+
+            }
+
+        }
+
+        if (enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
+            dy= (float) (dy + Math.abs(dx)*Constants.BULLET_SPEED_PER_TICK);// 0.9f;//Math.abs(dy*0.3f);
+        } else if (!enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
+            dy= (float) (dy - Math.abs(dx)*Constants.BULLET_SPEED_PER_TICK/2);//0.9f;//Math.abs(dy*0.3f);
+        }
+
+        if (Constants.ON_DEBUG)
+            debug.draw(new CustomData.Line(new Vec2Float(unit.position.x, unit.position.y+Constants.UNIT_H2), new Vec2Float(unit.position.x+dx, unit.position.y+dy+Constants.UNIT_H2), 0.1f, new ColorFloat(128, 128, 0, 0.5f)));
+
+        action.setAim(new Vec2Double(dx, dy));
+
+        /*l = (float) Math.sqrt(dx*dx + dy*dy);
         v = new Vec2Float(0.15f * dx/l, 0.15f * dy/l);
 
         for (int i=0;i<ls;i++) {
@@ -366,6 +427,41 @@ public class Shoot {
         }
 
         action.setAim(new Vec2Double(dx, dy));
+        */
+
+        ldx=dx;
+        ldy=dy;
+    }
+
+    private boolean checkShoot(float dx, float dy, Unit enemy, Vec2Float b) {
+
+        boolean canShoot = true;
+        boolean lShoot = false;
+
+        int ls=150;
+
+        float l;
+        Vec2Float v;
+
+        l = (float) Math.sqrt(dx*dx + dy*dy);
+        v = new Vec2Float(0.15f * dx/l, 0.15f * dy/l);
+
+        for (int i=0;i<ls;i++) {
+            if (canShoot && check(b)) {
+                canShoot = false;
+                break;
+            }
+
+            if (b.x>enemy.getPosition().x-0.5f && b.x<enemy.getPosition().x+0.5f && b.y>enemy.getPosition().y && b.y<enemy.getPosition().y+1.8f) {
+                lShoot = true;
+                break;
+            }
+
+            b.x+=v.x;
+            b.y+=v.y;
+        }
+
+        return canShoot && lShoot;
     }
 
     private boolean check(Vec2Float b) {

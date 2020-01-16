@@ -16,15 +16,15 @@ public class Sim_v1 {
 
         steps = new Vec2Float[8][ticks];
 
-        chain(steps[0], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 0d);
+        /*chain(steps[0], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 0d);
         chain(steps[1], unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 0d);
-        chain(steps[2], unit, game, debug, action, 0d, Constants.UNIT_Y_SPEED_PER_TICK);
-        chain(steps[3], unit, game, debug, action, 0d, -Constants.UNIT_Y_SPEED_PER_TICK);
+        chain(steps[2], unit, game, debug, action, 0d, 1);
+        chain(steps[3], unit, game, debug, action, 0d, -1);*/
 
-        chain(steps[4], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, Constants.UNIT_Y_SPEED_PER_TICK);
-        chain(steps[5], unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, Constants.UNIT_Y_SPEED_PER_TICK);
-        chain(steps[6], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -Constants.UNIT_Y_SPEED_PER_TICK);
-        chain(steps[7], unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -Constants.UNIT_Y_SPEED_PER_TICK);
+        chain(steps[4], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 1);
+        chain(steps[5], unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 1);
+        chain(steps[6], unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -1);
+        chain(steps[7], unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -1);
 
         Unit enemy = null;
 
@@ -35,7 +35,8 @@ public class Sim_v1 {
             }
         }
 
-        System.out.println(game.getCurrentTick() + " tj" + enemy.jumpState.getMaxTime() + " cj=" + enemy.jumpState.isCanJump() + " cc=" + enemy.jumpState.isCanCancel() + " y=" + enemy.position.y);
+        System.out.println(game.getCurrentTick() + "e tj" + enemy.jumpState.getMaxTime() + " cj=" + enemy.jumpState.isCanJump() + " cc=" + enemy.jumpState.isCanCancel() + " y=" + enemy.position.y + " s=" + enemy.jumpState.speed);
+        System.out.println(game.getCurrentTick() + "u tj" + unit.jumpState.getMaxTime() + " cj=" + unit.jumpState.isCanJump() + " cc=" + unit.jumpState.isCanCancel() + " y=" + unit.position.y + " s=" + unit.jumpState.speed);
 
     }
 
@@ -82,25 +83,28 @@ public class Sim_v1 {
 
     }
 
+    //todo когда вверх то неправильно площадки обрабатывает
     private static void step(Vec2Double p, double vx, double vy, JumpState jumpState) {
 
         double dx,dy;
 
         dx=vx;
-        dy=vy;
+        dy=vy*jumpState.speed;
 
         if (jumpState.maxTime <= 0) {
             jumpState.canJump = false;
             jumpState.maxTime = 0;
             jumpState.canCancel = false;
-            dy=0;
+            jumpState.speed = 0;
         }
 
         if (dx>0) {
             if (World.map[(int)(p.y)][(int)(p.x+vx + Constants.UNIT_W2)] == 1 ||
                     World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x+vx + Constants.UNIT_W2)] == 1 ||
                     World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x+vx + Constants.UNIT_W2)] == 1) {
+
                 dx=0d;
+
             }
         }
 
@@ -108,53 +112,144 @@ public class Sim_v1 {
             if (World.map[(int)(p.y)][(int)(p.x+vx - Constants.UNIT_W2)] == 1 ||
                     World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x+vx - Constants.UNIT_W2)] == 1 ||
                     World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x+vx - Constants.UNIT_W2)] == 1) {
+
                 dx=0d;
+
             }
         }
         p.x+=dx;
 
-        if (vy>0 && !jumpState.canJump)
+        if (vy>0 && !jumpState.canJump)//уже падаю или прекратил прыгать
             dy=0;
-        if (vy<0 && !jumpState.canCancel)
+        if (vy<0 && !jumpState.canCancel)//хочу вниз, но трамплин подбросил
             dy=0;
 
+        if (jumpState.speed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
+            dy=jumpState.speed;
+        }
+
+        //потолок
         if (dy>0) {
-            if(World.map[(int)(p.y+vy + Constants.UNIT_H)][(int)(p.x - Constants.UNIT_W2)] == 1 ||
-                    World.map[(int)(p.y+vy + Constants.UNIT_H)][(int)(p.x + Constants.UNIT_W2)] == 1) {
+            if(World.map[(int)(p.y+vy*jumpState.speed + Constants.UNIT_H)][(int)(p.x - Constants.UNIT_W2)] == 1 ||
+                    World.map[(int)(p.y+vy*jumpState.speed + Constants.UNIT_H)][(int)(p.x + Constants.UNIT_W2)] == 1) {
+
+                //погрешность что должен попасть в потолок с трамплина, но не учитываю
                 jumpState.canJump = false;
                 jumpState.maxTime = 0;
                 jumpState.canCancel = false;
+                jumpState.speed = 0;
 
-                dy=-jumpState.speed;
+                dy=-Constants.UNIT_Y_SPEED_PER_TICK;
+
             }
         }
 
-        if(World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] != 0 ||
-                World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] != 0) {
-            jumpState.canJump = true;
-            jumpState.maxTime = Constants.JUMP_TIME;
-            jumpState.canCancel = true;
+        //внизу не пусто и мы не с трамплина или не вверх хотим
+        if (jumpState.speed != Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD)
+            if((World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] != 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] != 3)
+                    ||
+                    (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] != 0 &&
+                            World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] != 3)) {
 
-        }
+                //падаем
+                if (jumpState.speed == 0) {
+                    jumpState.canJump = true;
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                } else {
+                    if (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] != 2 &&
+                            World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] != 2) {
+                        jumpState.canJump = true;
+                        jumpState.maxTime = Constants.JUMP_TIME;
+                        jumpState.canCancel = true;
+                        jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                    }
+                }
 
+                if (dy<0)
+                    dy=0;
+            }
+
+        //внизу стена
         if (dy<0) {
             if (World.map[(int) (p.y - Constants.UNIT_Y_SPEED_PER_TICK)][(int) (p.x - Constants.UNIT_W2)] == 1 ||
                     World.map[(int) (p.y - Constants.UNIT_Y_SPEED_PER_TICK)][(int) (p.x + Constants.UNIT_W2)] == 1) {
+
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME;
+                jumpState.canCancel = true;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+
                 dy = 0;
 
             }
+
+            //если сейчас пусто под ногами, то падаем
+            if (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2 - dx)] == 0 &&
+                    World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2 - dx)] == 0)
+                dy=-Constants.UNIT_Y_SPEED_PER_TICK;
+            else
+                dy=-Constants.FIRST_FALL_TICK_SPEED_Y;//первый тик падения меньше
+
         }
 
+        //внизу пусто, падаем
         if (dy==0) {
             if(World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] == 0 &&
                     World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] == 0) {
+
                 jumpState.canJump = false;
                 jumpState.maxTime = 0;
                 jumpState.canCancel = false;
+                jumpState.speed = 0;
 
-                dy=-Constants.UNIT_Y_SPEED_PER_TICK;
+                //если сейчас пусто под ногами, то падаем
+                if (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2 - dx)] == 0 &&
+                        World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2 - dx)] == 0)
+                    dy=-Constants.UNIT_Y_SPEED_PER_TICK;
+                else
+                    dy=-Constants.FIRST_FALL_TICK_SPEED_Y;//первый тик падения меньше
             }
         }
+
+        //сейчас трамплин
+        if(World.map[(int)(p.y)][(int)(p.x - Constants.UNIT_W2)] == 4 ||
+                World.map[(int)(p.y)][(int)(p.x + Constants.UNIT_W2)] == 4) {
+
+            jumpState.canJump = true;
+            jumpState.maxTime = Constants.JUMP_TIME_PAD;
+            jumpState.canCancel = false;
+            jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+        }
+
+        //внизу трамплин
+        if(World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] == 4 ||
+                World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] == 4) {
+
+            jumpState.canJump = true;
+            jumpState.maxTime = Constants.JUMP_TIME_PAD;
+            jumpState.canCancel = false;
+            jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+        }
+
+        //на лестнице
+        if (World.map[(int)(p.y)][(int)(p.x)] == 3 ||
+                World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x)] == 3) {
+
+            jumpState.canJump = true;
+            jumpState.maxTime = Constants.JUMP_TIME;
+            jumpState.canCancel = true;
+            jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+
+            dy = vy*jumpState.speed;
+
+        }
+
+
 
         p.y+=dy;
 

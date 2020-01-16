@@ -21,7 +21,7 @@ public class UnitAction {
     public boolean reload;
     public boolean isReload() { return reload; }
     public void setReload(boolean reload) { this.reload = reload; }
-    private boolean swapWeapon;
+    public boolean swapWeapon;
     public boolean isSwapWeapon() { return swapWeapon; }
     public void setSwapWeapon(boolean swapWeapon) { this.swapWeapon = swapWeapon; }
     public boolean plantMine;

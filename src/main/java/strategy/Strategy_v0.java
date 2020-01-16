@@ -217,7 +217,7 @@ public class Strategy_v0 extends AkaNpouStrategy {
             }
         }
 
-        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) < 25)
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) < 64)
             return true;
         else
             return false;
@@ -236,7 +236,7 @@ public class Strategy_v0 extends AkaNpouStrategy {
             }
         }
 
-        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) >= 25)
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) >= 64)
             return true;
         else
             return false;
@@ -244,6 +244,9 @@ public class Strategy_v0 extends AkaNpouStrategy {
 
 
     private void drawSomething(Unit unit, Game game, Debug debug) {
+        if (!Constants.ON_DEBUG)
+            return;
+
         if (Constants.ON_DEBUG) {
             System.out.println(unit);
             System.out.println("tick " + game.getCurrentTick());

@@ -5,7 +5,7 @@ import myModel.Constants;
 import myModel.Dodge;
 import myModel.UnitStatus;
 import myModel.World;
-import sims.Sim_v1;
+import sims.*;
 
 /**
  * Created by aka_npou on 30.11.2019.
@@ -17,6 +17,11 @@ public class Strategy_v2 extends AkaNpouStrategy {
     @Override
     public UnitAction getAction(Unit unit, Game game, Debug debug) {
 
+        if (game.getCurrentTick()>currentTick) {
+            Dodge.setBullets(unit, game, debug);
+            currentTick=game.getCurrentTick();
+        }
+
         if (game.getCurrentTick() == 0) {
             world.setMap(game.getLevel());
             world.setPatencyMap(game.getLevel(), unit.getPosition());
@@ -26,11 +31,11 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
 
-        //drawSomething(unit, game, debug);
+        drawSomething(unit, game, debug);
 
         if (needDodge(unit, game, debug)) {
             unitStatus = UnitStatus.Dodge;
-        } else if (unit.weapon == null) {
+        } else if (unit.weapon == null || unit.weapon.typ == WeaponType.ROCKET_LAUNCHER) {
             unitStatus = UnitStatus.GoToWeapon;
         } else {
             if (enemyNearly(unit, game, debug)) {
@@ -47,7 +52,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         UnitAction action = new UnitAction();
         action.aim = Vec2Double.ZERO;
 
-        Sim_v1.sim(unit, game, debug, action);
+        Sim_v2.sim(unit, game, debug, action);
 
         if (unitStatus == UnitStatus.Dodge) {
             dodge(unit, game, debug, action);
@@ -79,14 +84,14 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         //shoot.drawShoot(enemy, unit, debug);
-        //shoot.canShoot(unit, enemy, debug, action);
+        shoot.canShoot(unit, enemy, debug, action);
 
 
         return action;
     }
 
     private void goToWeapon(Unit unit, Game game, Debug debug, UnitAction action) {
-        LootBox nearestWeapon = null;
+        /*LootBox nearestWeapon = null;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 1) {
                 if (nearestWeapon == null || distanceSqr(unit.getPosition(),
@@ -94,27 +99,46 @@ public class Strategy_v2 extends AkaNpouStrategy {
                     nearestWeapon = lootBox;
                 }
             }
+        }*/
+
+        LootBox nearestWeapon = null;
+        for (LootBox lootBox : game.getLootBoxes()) {
+            if (lootBox.getItem().TAG == 1) {
+                Item.Weapon w = (Item.Weapon)lootBox.item;
+                if (w.getWeaponType() !=WeaponType.ROCKET_LAUNCHER)
+                    if (nearestWeapon == null || distanceSqr(unit.getPosition(),
+                            lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) {
+                        nearestWeapon = lootBox;
+                    }
+            }
         }
 
         //action.setVelocity((nearestWeapon.position.x - unit.position.x)*100f);
 
         double minL = 50*50;
         Vec2Float minP = null;
-        for (int i=0;i<Sim_v1.steps.length;i++) {
+        for (int i=0;i<Sim_v2.steps.length;i++) {
             if (minP==null) {
-                minP = Sim_v1.steps[i][0];
-                minL = distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestWeapon.position);
+                minP = Sim_v2.steps[i][0];
+                for (Vec2Float p:Sim_v2.steps[i])
+                    minL = distanceSqr(p, nearestWeapon.position);
+
             } else {
-                if (minL > distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestWeapon.position)) {
-                    minP = Sim_v1.steps[i][0];
-                    minL = distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestWeapon.position);
+                for (Vec2Float p:Sim_v2.steps[i]) {
+                    if (minL > distanceSqr(p, nearestWeapon.position)) {
+                        minP = Sim_v2.steps[i][0];
+                        minL = distanceSqr(p, nearestWeapon.position);
+                    }
                 }
             }
         }
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (minP.y>unit.position.y)
-            action.setJump(true);
+            action.jump=true;
+
+        if (minP.y<unit.position.y)
+            action.jumpDown=true;
 
         //jump(unit, game, debug, action, nearestWeapon.position);
     }
@@ -130,9 +154,31 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        action.setVelocity((nearestHP.position.x - unit.position.x)*100f);
+        double minL = 50*50;
+        Vec2Float minP = null;
+        for (int i=0;i<Sim_v2.steps.length;i++) {
+            if (minP==null) {
+                minP = Sim_v2.steps[i][0];
+                for (Vec2Float p:Sim_v2.steps[i])
+                    minL = distanceSqr(p, nearestHP.position);
 
-        jump(unit, game, debug, action, nearestHP.position);
+            } else {
+                for (Vec2Float p:Sim_v2.steps[i]) {
+                    if (minL > distanceSqr(p, nearestHP.position)) {
+                        minP = Sim_v2.steps[i][0];
+                        minL = distanceSqr(p, nearestHP.position);
+                    }
+                }
+            }
+        }
+
+        action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
+        if (minP.y>unit.position.y)
+            action.jump=true;
+
+        if (minP.y<unit.position.y)
+            action.jumpDown=true;
+
     }
 
     private void goToEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
@@ -147,27 +193,31 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        //action.setVelocity((20 - unit.position.x)*100f);
-
         double minL = 50*50;
         Vec2Float minP = null;
-        for (int i=0;i<Sim_v1.steps.length;i++) {
+        for (int i=0;i<Sim_v2.steps.length;i++) {
             if (minP==null) {
-                minP = Sim_v1.steps[i][0];
-                minL = distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestEnemy.position);
+                minP = Sim_v2.steps[i][0];
+                for (Vec2Float p:Sim_v2.steps[i])
+                    minL = distanceSqr(p, nearestEnemy.position);
+
             } else {
-                if (minL > distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestEnemy.position)) {
-                    minP = Sim_v1.steps[i][0];
-                    minL = distanceSqr(Sim_v1.steps[i][Sim_v1.ticks-1], nearestEnemy.position);
+                for (Vec2Float p:Sim_v2.steps[i]) {
+                    if (minL > distanceSqr(p, nearestEnemy.position)) {
+                        minP = Sim_v2.steps[i][0];
+                        minL = distanceSqr(p, nearestEnemy.position);
+                    }
                 }
             }
         }
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (minP.y>unit.position.y)
-            action.setJump(true);
+            action.jump=true;
 
-        //jump(unit, game, debug, action, nearestEnemy.position);
+        if (minP.y<unit.position.y)
+            action.jumpDown=true;
+
     }
 
     private void goFromEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
@@ -182,9 +232,30 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        action.setVelocity((20 - unit.position.x)*100f);
+        double maxL = -1;
+        Vec2Float maxP = null;
+        for (int i=0;i<Sim_v2.steps.length;i++) {
+            if (maxP==null) {
+                maxP = Sim_v2.steps[i][0];
+                for (Vec2Float p:Sim_v2.steps[i])
+                    maxL = distanceSqr(p, nearestEnemy.position);
 
-        //jump(unit, game, debug, action, nearestEnemy.position);
+            } else {
+                for (Vec2Float p:Sim_v2.steps[i]) {
+                    if (maxL < distanceSqr(p, nearestEnemy.position)) {
+                        maxP = Sim_v2.steps[i][0];
+                        maxL = distanceSqr(p, nearestEnemy.position);
+                    }
+                }
+            }
+        }
+
+        action.setVelocity((maxP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
+        if (maxP.y>unit.position.y)
+            action.jump=true;
+
+        if (maxP.y<unit.position.y)
+            action.jumpDown=true;
     }
 
 
@@ -217,22 +288,32 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private boolean needDodge(Unit unit, Game game, Debug debug) {
 
-        if (1==1)
-            return false;
+        //if (1==1)
+        //    return true;
 
         if (game.getBullets().length == 0)
             return false;
 
-        double minBulletDist = 1000;
-        double currentBulletDist = 0;
-        for (Bullet b:game.getBullets()) {
-            currentBulletDist = Math.abs(unit.position.x - b.position.x) + Math.abs(unit.position.y - b.position.y);
-            if (currentBulletDist < minBulletDist)
-                minBulletDist = currentBulletDist;
-        }
+        for (int b=0; b<Dodge.bullets.size();b++) {
+            //выкинуть свои пули
+            if (game.getBullets()[b].unitId ==  unit.id && game.getBullets()[b].explosionParams == null)
+                continue;
 
-        if (minBulletDist <= 10)
+            //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
+            if (game.getBullets()[b].position.x > unit.position.x+Constants.UNIT_W2+0.2f && Dodge.bullets.get(b).x > 0)
+                continue;
+
+            if (game.getBullets()[b].position.x < unit.position.x-Constants.UNIT_W2-0.2f && Dodge.bullets.get(b).x < 0)
+                continue;
+
+            if (game.getBullets()[b].position.y > unit.position.y+Constants.UNIT_H+0.2f && Dodge.bullets.get(b).y > 0)
+                continue;
+
+            if (game.getBullets()[b].position.y < unit.position.y-0.2f && Dodge.bullets.get(b).y < 0)
+                continue;
+
             return true;
+        }
 
         return false;
     }
@@ -253,7 +334,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) < 25)
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) < 64)
             return true;
         else
             return false;
@@ -272,7 +353,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) >= 25)
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) >= 64)
             return true;
         else
             return false;

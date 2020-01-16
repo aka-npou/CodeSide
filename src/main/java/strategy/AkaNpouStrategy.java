@@ -15,6 +15,8 @@ import util.GenShootChain;
  */
 public abstract class AkaNpouStrategy {
 
+    int currentTick=-1;
+
     World world = new World();
 
     Dodge dodge = new Dodge();
