@@ -9,23 +9,23 @@ import myModel.*;
 public class Sim_v3 {
 
     public static int ticks = 120;
-    public static Vec2Double[][] steps = new Vec2Double[9][ticks];
+    public static Vec2Double[][] steps = new Vec2Double[18][ticks];
 
     public static void  sim(Unit unit, Game game, Debug debug, UnitAction action) {
 
         //steps = new Vec2Double[9][ticks];
 
-        chain(0, unit, unit.jumpState, unit.position, game, debug, action, 0, 0,0, false);
+        chain(0, unit, unit.jumpState, unit.position, game, debug, action, 0, 0,0, true);
 
-        chain( 1, unit, unit.jumpState, unit.position, game, debug, action, 0d, -1,0, false);
-        chain(2, unit, unit.jumpState, unit.position, game, debug, action, 0d, 1,0, false);
-        chain(3, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 0d,0, false);
-        chain(4, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 0d,0, false);
+        chain( 1, unit, unit.jumpState, unit.position, game, debug, action, 0d, -1,0, true);
+        chain(2, unit, unit.jumpState, unit.position, game, debug, action, 0d, 1,0, true);
+        chain(3, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 0d,0, true);
+        chain(4, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 0d,0, true);
 
-        chain(5, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 1,0, false);
-        chain(6, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 1,0, false);
-        chain(7, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -1,0, false);
-        chain(8, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -1,0, false);
+        chain(5, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 1,0, true);
+        chain(6, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 1,0, true);
+        chain(7, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -1,0, true);
+        chain(8, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -1,0, true);
 
 
         //попробуем через 36 тиков менять направления
@@ -93,11 +93,11 @@ public class Sim_v3 {
             if (Constants.ON_DEBUG)
                 debug.draw(new CustomData.Rect(new Vec2Float(p.x+unit.id/10f, p.y+unit.id/10f), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
 
-            if (tick == 17 && branch && chain>4) {
-                for (int i=0;i<18;i++) {
-                    steps[chain+4][i]=steps[chain][i];
+            if (tick == 5 && branch) {
+                for (int i=0;i<6;i++) {
+                    steps[chain+9][i]=steps[chain][i];
                 }
-                chain(chain+4, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,18, false);
+                chain(chain+9, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,6, false);
             }
         }
 

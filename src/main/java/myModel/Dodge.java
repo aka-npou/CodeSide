@@ -171,19 +171,19 @@ public class Dodge {
                     hit = checkHit(bullet.x,
                             bullet.y,
                             u.x,
-                            u.y, game.getBullets()[b].size);
+                            u.y, game.getBullets()[b].size/2d);
 
                     if (hit == 0)
                         hit = checkHit(bullet.x+bullets.get(b).x,
                                 bullet.y+bullets.get(b).y,
                                 u.x,
-                                u.y, game.getBullets()[b].size);
+                                u.y, game.getBullets()[b].size/2d);
 
                     if (hit == 0)
                         hit = checkHit(bullet.x+bullets.get(b).x,
                                 bullet.y+bullets.get(b).y,
                                 p.x,
-                                p.y, game.getBullets()[b].size);
+                                p.y, game.getBullets()[b].size/2d);
 
 
                     if (hit == 0)
@@ -222,7 +222,7 @@ public class Dodge {
                             hit = checkHit(bullet.x,
                                     bullet.y,
                                     u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size);
+                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
 
                             hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
 
@@ -272,10 +272,16 @@ public class Dodge {
         }
 
         action.setVelocity((p.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        if (p.y>unit.position.y)
+        /*if (p.y>unit.position.y)
             action.jump=true;
 
         if (p.y<unit.position.y)
+            action.jumpDown=true;*/
+
+        if (p.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
+            action.jump=true;
+
+        if (p.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
 
         if (Constants.ON_DEBUG)
