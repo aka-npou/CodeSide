@@ -116,7 +116,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
                             lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) {
                         nearestWeapon = lootBox;
                     }*/
-                    if (nearestWeapon == null ||World.liMap[(int)lootBox.position.y][(int)lootBox.position.x]<World.liMap[(int)nearestWeapon.position.y][(int)nearestWeapon.position.x])
+                    if (nearestWeapon == null || World.liMap[(int)lootBox.position.y][(int)lootBox.position.x]<World.liMap[(int)nearestWeapon.position.y][(int)nearestWeapon.position.x])
                         nearestWeapon = lootBox;
                 }
             }
@@ -124,19 +124,22 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         //action.setVelocity((nearestWeapon.position.x - unit.position.x)*100f);
 
-        double minL = 50*50;
+        float minL = 50*50;
+        //float cellLootBox=World.liMap[(int)nearestWeapon.position.y][(int)nearestWeapon.position.x];
         Vec2Float minP = null;
         for (int i=0;i<Sim_v2.steps.length;i++) {
             if (minP==null) {
                 minP = Sim_v2.steps[i][0];
                 for (Vec2Float p:Sim_v2.steps[i])
                     minL = distanceSqr(p, nearestWeapon.position);
+                    //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
 
             } else {
                 for (Vec2Float p:Sim_v2.steps[i]) {
                     if (minL > distanceSqr(p, nearestWeapon.position)) {
                         minP = Sim_v2.steps[i][0];
                         minL = distanceSqr(p, nearestWeapon.position);
+                        //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
                     }
                 }
             }
@@ -165,11 +168,12 @@ public class Strategy_v2 extends AkaNpouStrategy {
                         lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestHP.getPosition())) {
                     nearestHP = lootBox;
                 }*/
-                if (nearestHP == null ||World.liMap[(int)lootBox.position.y][(int)lootBox.position.x]<World.liMap[(int)nearestHP.position.y][(int)nearestHP.position.x])
+                if (nearestHP == null || World.liMap[(int)lootBox.position.y][(int)lootBox.position.x]<World.liMap[(int)nearestHP.position.y][(int)nearestHP.position.x])
                     nearestHP = lootBox;
             }
         }
 
+        //todo поменять на поиск по ЛИ
         double minL = 50*50;
         Vec2Float minP = null;
         for (int i=0;i<Sim_v2.steps.length;i++) {
@@ -177,12 +181,14 @@ public class Strategy_v2 extends AkaNpouStrategy {
                 minP = Sim_v2.steps[i][0];
                 for (Vec2Float p:Sim_v2.steps[i])
                     minL = distanceSqr(p, nearestHP.position);
+                    //minL = World.liMap[(int)p.y][(int)p.x];
 
             } else {
                 for (Vec2Float p:Sim_v2.steps[i]) {
                     if (minL > distanceSqr(p, nearestHP.position)) {
                         minP = Sim_v2.steps[i][0];
                         minL = distanceSqr(p, nearestHP.position);
+                        //minL = World.liMap[(int)p.y][(int)p.x];
                     }
                 }
             }
@@ -337,16 +343,16 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
             //if (distanceSqr(game.getBullets()[b].position.x, game.getBullets()[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
                 //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
-                if (game.getBullets()[b].position.x > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
+                if (game.getBullets()[b].position.x + 3.2f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
                     return true;
 
-                if (game.getBullets()[b].position.x < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
+                if (game.getBullets()[b].position.x -3.2f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
                     return true;
 
-                if (game.getBullets()[b].position.y > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
+                if (game.getBullets()[b].position.y + 3.2f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
                     return true;
 
-                if (game.getBullets()[b].position.y < unit.position.y && Dodge.bullets.get(b).y > 0)
+                if (game.getBullets()[b].position.y - 3.2f < unit.position.y && Dodge.bullets.get(b).y > 0)
                     return true;
             //}
 
@@ -459,7 +465,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         return (a.x - b.x) * (a.x - b.x) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }*/
 
-    static double distanceSqr(Vec2Float a, Vec2Float b) {
+    static float distanceSqr(Vec2Float a, Vec2Float b) {
         return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
     }
 
@@ -467,7 +473,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         return (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
     }*/
 
-    static double distanceSqr(float ax, float ay, float bx, float by) {
+    static float distanceSqr(float ax, float ay, float bx, float by) {
         return (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
     }
 }

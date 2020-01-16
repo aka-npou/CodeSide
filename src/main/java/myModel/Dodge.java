@@ -141,16 +141,16 @@ public class Dodge {
 
                 //if (distanceSqr(game.getBullets()[b].position.x, game.getBullets()[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
                     //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
-                    if (game.getBullets()[b].position.x > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
+                    if (game.getBullets()[b].position.x+3.2f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
                         neeedCheck = true;
 
-                    if (game.getBullets()[b].position.x < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
+                    if (game.getBullets()[b].position.x-3.2f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
                         neeedCheck = true;
 
-                    if (game.getBullets()[b].position.y > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
+                    if (game.getBullets()[b].position.y+3.2f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
                         neeedCheck = true;
 
-                    if (game.getBullets()[b].position.y < unit.position.y && Dodge.bullets.get(b).y > 0)
+                    if (game.getBullets()[b].position.y-3.2f < unit.position.y && Dodge.bullets.get(b).y > 0)
                         neeedCheck = true;
                 //}
 
@@ -217,7 +217,7 @@ public class Dodge {
                             hit = checkHit(bullet.x,
                                     bullet.y,
                                     u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius());
+                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size);
 
                             hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
 
@@ -237,23 +237,26 @@ public class Dodge {
 
             }
 
-
-            //System.out.println("hit " + i + " " + hits[i]);
+            if (Constants.ON_DEBUG)
+                System.out.println("hit " + i + " " + hits[i]);
 
         }
 
         int minHits=1000;
         Vec2Float p = null;
+        int minI = -1;
 
         for (int i=0;i<hits.length;i++) {
 
             if (p==null) {
                 p=Sim_v2.steps[i][0];
                 minHits=hits[i];
+                minI=i;
             } else {
                 if (minHits>hits[i]) {
                     p=Sim_v2.steps[i][0];
                     minHits=hits[i];
+                    minI=i;
                 }
             }
 
@@ -265,6 +268,9 @@ public class Dodge {
 
         if (p.y<unit.position.y)
             action.jumpDown=true;
+
+        if (Constants.ON_DEBUG)
+            debug.draw(new CustomData.Log("go to " + minI));
 
     }
 
