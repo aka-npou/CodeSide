@@ -15,7 +15,7 @@ public class Constants {
     public static final float UNIT_X_SPEED_PER_TICK = 10f/60f;
     public static final float UNIT_Y_SPEED_PER_SECOND = 10f;
     public static final float UNIT_Y_SPEED_PER_TICK = 10f/60f;
-    public static final float UNIT_Y_SPEED_PER_TICK_JUMP_PAD = 20f/60f;
+    public static final double UNIT_Y_SPEED_PER_TICK_JUMP_PAD = 20d/60d;
 
     public static final float BULLET_SPEED_PER_TICK = 20f/60f;
 

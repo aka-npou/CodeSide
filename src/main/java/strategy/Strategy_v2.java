@@ -343,16 +343,16 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
             //if (distanceSqr(game.getBullets()[b].position.x, game.getBullets()[b].position.y, unit.position.x, unit.position.y+Constants.UNIT_H2) >= 9) {
                 //выкинуть пули которые уже точно не в нас, позиция и скорость не в нашу сторону
-                if (game.getBullets()[b].position.x + 3.2f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
+                if (game.getBullets()[b].position.x + 4f > unit.position.x + Constants.UNIT_W2 && Dodge.bullets.get(b).x < 0)
                     return true;
 
-                if (game.getBullets()[b].position.x -3.2f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
+                if (game.getBullets()[b].position.x -4f < unit.position.x - Constants.UNIT_W2 && Dodge.bullets.get(b).x > 0)
                     return true;
 
-                if (game.getBullets()[b].position.y + 3.2f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
+                if (game.getBullets()[b].position.y + 4f > unit.position.y + Constants.UNIT_H && Dodge.bullets.get(b).y < 0)
                     return true;
 
-                if (game.getBullets()[b].position.y - 3.2f < unit.position.y && Dodge.bullets.get(b).y > 0)
+                if (game.getBullets()[b].position.y - 4f < unit.position.y && Dodge.bullets.get(b).y > 0)
                     return true;
             //}
 
