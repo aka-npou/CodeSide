@@ -2,7 +2,9 @@ package myModel;
 
 import model.*;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Created by aka_npou on 27.11.2019.
@@ -15,6 +17,8 @@ public class World {
     public static int[][] reachabilityMap;
     public static int x;
     public static int y;
+
+    public static HashMap<Integer, LiMap> maps = new HashMap<>();
 
     //EMPTY(0)
     //WALL(1)
@@ -184,6 +188,7 @@ public class World {
         }
 
         System.out.println("");
+
         /*ColorFloat yes = new ColorFloat(0,255,0,0.5f);
         ColorFloat no = new ColorFloat(255,0,0,0.5f);
         for (int yy=0; yy<y; yy++) {
@@ -193,6 +198,69 @@ public class World {
 
             }
         }*/
+
+    }
+
+    public void printD(int[][] _map, Debug debug) {
+
+        if (!Constants.ON_DEBUG)
+            return;
+
+        for (int yy=0; yy<y; yy++) {
+            for (int xx=0; xx<x; xx++) {
+
+                debug.draw(new CustomData.PlacedText(""+_map[yy][xx], new Vec2Float(xx+0.5f, yy+0.5f), TextAlignment.CENTER,10f, new ColorFloat(1,1,1,1)));
+
+            }
+            System.out.println("");
+        }
+
+    }
+
+    public void setMaps(Game game, Unit unit) {
+
+        for (Unit u:game.getUnits()) {
+            if (u.playerId == unit.playerId)
+                continue;
+
+            LiMap m = new LiMap();
+            m.map = new int[World.y][World.x];
+            m.active=true;
+            Li.getLiMap(patencyMap, new Vec2Int((int)u.position.x, (int)u.position.y), m.map);
+            maps.put(u.id, m);
+
+        }
+
+        for (LootBox l:game.getLootBoxes()) {
+
+            LiMap m = new LiMap();
+            m.map = new int[World.y][World.x];
+            m.active=true;
+            Li.getLiMap(patencyMap, new Vec2Int((int)l.position.x, (int)l.position.y), m.map);
+            maps.put((int)l.position.x*10+(int)l.position.y*10*World.x, m);
+
+        }
+    }
+
+    public void actualMaps(Game game, Unit unit) {
+
+        for (Unit u:game.getUnits()) {
+            if (u.playerId == unit.playerId)
+                continue;
+
+            Li.getLiMap(patencyMap, new Vec2Int((int)u.position.x, (int)u.position.y), maps.get(u.id).map);
+
+        }
+
+        for (Map.Entry<Integer, LiMap> entry:maps.entrySet()) {
+            entry.getValue().active=false;
+        }
+
+        for (LootBox l:game.getLootBoxes()) {
+            if (maps.containsKey((int)l.position.x*10+(int)l.position.y*10*World.x)) {
+                maps.get((int)l.position.x*10+(int)l.position.y*10*World.x).active=true;
+            }
+        }
 
     }
 }

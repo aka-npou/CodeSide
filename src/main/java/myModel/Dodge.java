@@ -52,10 +52,72 @@ public class Dodge {
         return 0;
     }
 
+    private static int checkHitBoxes(double bx, double by, double ux1, double uy1, double ux2, double uy2) {
+
+        if (bx > Math.min(ux1, ux2) &&
+                bx < Math.max(ux1, ux2) &&
+                by > Math.min(uy1, uy2) &&
+                by < Math.max(uy1, uy2))
+            return 1;
+
+        return 0;
+    }
+
     //возможно надо перейти на проверку линии пули с юнитом
     //a c b d
     private static int checkHitFlow(double bx1, double by1, double ux1, double uy1,
-                                    double bx2, double by2, double ux2, double uy2) {
+                                    double bx2, double by2, double ux2, double uy2, double sizeB) {
+        //
+        if (checkHitBoxes(bx1+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        //
+        if (checkHitBoxes(bx1+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        if (checkHitBoxes(bx1-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        //
+        if (checkHitBoxes(bx2+sizeB/2d, by1+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2-sizeB/2d, by1+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2+sizeB/2d, by1-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2-sizeB/2d, by1-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        //
+        if (checkHitBoxes(bx2+sizeB/2d, by2+sizeB/2d,ux1-Constants.UNIT_W2, uy1, ux2-Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2-sizeB/2d, by2+sizeB/2d,ux1+Constants.UNIT_W2, uy1, ux2+Constants.UNIT_W2, uy2)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2+sizeB/2d, by2-sizeB/2d,ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
+
+        if (checkHitBoxes(bx2-sizeB/2d, by2-sizeB/2d,ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H)==1)
+            return 1;
 
         double border=0.1;
         //проверка линии пули с первым положением
@@ -190,7 +252,7 @@ public class Dodge {
 
                     if (hit == 0)
                         hit=checkHitFlow(bullet.x, bullet.y, u.x, u.y,
-                            bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y);
+                            bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y, game.getBullets()[b].size);
 
                     if (hit==1 && Constants.ON_DEBUG) {
                         debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));
@@ -363,7 +425,7 @@ public class Dodge {
 
                     if (hit == 0)
                         hit=checkHitFlow(bullet.x, bullet.y, u.x, u.y,
-                                bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y);
+                                bullet.x+bullets.get(b).x, bullet.y+bullets.get(b).y, p.x, p.y, game.getBullets()[b].size);
 
                     if (hit==1 && Constants.ON_DEBUG) {
                         debug.draw(new CustomData.Rect(new Vec2Float(p.x-Constants.UNIT_W2, p.y), new Vec2Float(Constants.UNIT_W, Constants.UNIT_H), new ColorFloat(1,0,0,0.25f)));

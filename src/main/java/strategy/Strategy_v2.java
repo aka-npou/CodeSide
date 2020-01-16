@@ -18,8 +18,13 @@ public class Strategy_v2 extends AkaNpouStrategy {
     @Override
     public UnitAction getAction(Unit unit, Game game, Debug debug) {
 
+        if (Constants.LOCAL && game.getCurrentTick()>=Constants.STOP_TICK)
+            Constants.ON_DEBUG=true;
+
         if(Constants.ON_DEBUG)
             System.out.println("TICK "+game.getCurrentTick());
+
+
 
         if (game.getCurrentTick() == 0) {
             world.setMap(game.getLevel());
@@ -33,6 +38,11 @@ public class Strategy_v2 extends AkaNpouStrategy {
             if (game.getUnits().length>=4)
                 Constants.is2x2=true;
 
+            s = System.nanoTime();
+            world.setMaps(game, unit);
+            f = System.nanoTime();
+            System.out.println("maps " + (f - s));
+
             //чтобы не было ошибок нулевой тик стоим, тк он в падении
             UnitAction action = new UnitAction();
             action.aim = Vec2Double.ZERO;
@@ -40,6 +50,11 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         if (game.getCurrentTick()>currentTick) {
+            s = System.nanoTime();
+            world.actualMaps(game, unit);
+            f = System.nanoTime();
+            System.out.println("act " + (f - s));
+
             Dodge.setBullets(unit, game, debug);
 
             for (Unit u:game.getUnits()) {
@@ -140,7 +155,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        Vec2Double minP = getP(nearestWeapon.position, unit, game, debug, action, true);
+        Vec2Double minP = getP(nearestWeapon.position, unit, game, debug, action, true, null);
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
@@ -169,7 +184,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }
 
-        Vec2Double minP = getP(nearestHP.position, unit, game, debug, action, true);
+        Vec2Double minP = getP(nearestHP.position, unit, game, debug, action, true, null);
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
@@ -182,7 +197,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private void goToEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
 
-        Vec2Double minP = getP(nearestEnemy.position, unit, game, debug, action, true);
+        Vec2Double minP = getP(nearestEnemy.position, unit, game, debug, action, true, nearestEnemy);
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
@@ -195,7 +210,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private void goFromEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
 
-        Vec2Double maxP = getP(nearestEnemy.position, unit, game, debug, action, false);
+        Vec2Double maxP = getP(nearestEnemy.position, unit, game, debug, action, false, nearestEnemy);
 
         action.setVelocity((maxP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
         if (maxP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
@@ -319,20 +334,49 @@ public class Strategy_v2 extends AkaNpouStrategy {
     }
 
 
-    Vec2Double getP(Vec2Double targetPosition, Unit unit, Game game, Debug debug, UnitAction action, boolean goTo) {
+    Vec2Double getP(Vec2Double targetPosition, Unit unit, Game game, Debug debug, UnitAction action, boolean goTo, Unit enemy) {
+
+        if (enemy==null) {
+            world.print(World.maps.get((int) targetPosition.x * 10 + (int) targetPosition.y * 10 * World.x).map, debug);
+            world.printD(World.maps.get((int) targetPosition.x * 10 + (int) targetPosition.y * 10 * World.x).map, debug);
+        }
 
         int[] arrayML = new int[Sim_v3.steps.length];
         int[] arrayTL = new int[Sim_v3.steps.length];
+        int L;
+
+        int id;
+
+        if (enemy==null)
+            id=(int)targetPosition.x*10+(int)targetPosition.y*10*World.x;
+        else
+            id=enemy.id;
+
+        Vec2Double[] ps = new Vec2Double[Sim_v3.steps.length];
+
         for (int i=0;i<Sim_v3.steps.length;i++) {
 
             int tick=1;
             arrayML[i]=goTo?500*500:-1;
             arrayTL[i]=-1;
             for (Vec2Double p:Sim_v3.steps[i]) {
-                if (goTo && arrayML[i] > (int)(distanceSqr(p, targetPosition)*100) || !goTo && arrayML[i] < (int)(distanceSqr(p, targetPosition)*100)) {
+                /*if (goTo && arrayML[i] > (int)(distanceSqr(p, targetPosition)*100) || !goTo && arrayML[i] < (int)(distanceSqr(p, targetPosition)*100)) {
                     arrayML[i] = (int)(distanceSqr(p, targetPosition)*100);
                     //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
                     arrayTL[i] = tick;
+                    ps[i]=p;
+                }*/
+
+                L = World.maps.get(id).map[(int)p.y][(int)p.x];
+
+                if (goTo && arrayML[i]>L || !goTo && arrayML[i]<L) {
+                    arrayML[i] = L;
+                    arrayTL[i] = tick;
+                    ps[i]=p;
+
+                    if (Constants.ON_DEBUG)
+                        debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x, ps[i].y), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,1,1,0.5f)));
+
                 }
                 tick++;
             }
@@ -341,6 +385,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         if (Constants.ON_DEBUG) {
             for (int i=0;i<Sim_v3.steps.length;i++) {
                 System.out.println(i+ " l="+arrayML[i]+" t="+arrayTL[i]);
+                debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x, ps[i].y), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,1,1,1)));
             }
         }
 
@@ -377,7 +422,8 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         firstStep = Sim_v3.steps[mI][0];
-        System.out.println("mi="+mI+" mt="+mTick);
+        if (Constants.ON_DEBUG)
+            System.out.println("mi="+mI+" mt="+mTick);
 
         if (Constants.ON_DEBUG)
             debug.draw(new CustomData.Rect(new Vec2Float(Sim_v3.steps[mI][mTick-1].x-0.2f,Sim_v3.steps[mI][mTick-1].y-0.2f), new Vec2Float(0.4f,0.4f), new ColorFloat(0.5f,0.5f, 0.5f, 0.5f)));

@@ -269,7 +269,7 @@ public class Sim_v3 {
                     //считаем что приземлились
                     p.y -= dy;
 
-                    p.y = (int) p.y;
+                    p.y = (int) p.y + Constants.EPS;
                     jumpState.maxTime = Constants.JUMP_TIME;
                     jumpState.canJump = true;
                     jumpState.canCancel = true;
@@ -482,7 +482,7 @@ public class Sim_v3 {
                 canSpeed.toSpeed = 0;
 
                 if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
-                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) + Constants.EPS;
 
                     jumpState.maxTime = Constants.JUMP_TIME;
                     jumpState.canJump = true;
@@ -590,7 +590,7 @@ public class Sim_v3 {
                 canSpeed.toSpeed= 0;
 
                 if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
-                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) + Constants.EPS;
 
                     jumpState.maxTime = Constants.JUMP_TIME;
                     jumpState.canJump = true;
@@ -661,7 +661,7 @@ public class Sim_v3 {
                 canSpeed.toSpeed= 0;
 
                 if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
-                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) + Constants.EPS;
 
                     jumpState.maxTime = Constants.JUMP_TIME;
                     jumpState.canJump = true;
