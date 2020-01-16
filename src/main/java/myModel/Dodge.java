@@ -13,6 +13,7 @@ public class Dodge {
 
     public static ArrayList<Vec2Double> bullets;
     public static int[] hits;
+    public static int[] hitsTicks;
 
     public static void setBullets(Unit unit, Game game, Debug debug) {
 
@@ -54,7 +55,7 @@ public class Dodge {
 
     private static int checkHitBoxes(double bx, double by, double ux1, double uy1, double ux2, double uy2) {
 
-        double b=0.005;
+        double b=0.0045;
         if (bx+bx*b >= Math.min(ux1, ux2) &&
                 bx-bx*b <= Math.max(ux1, ux2) &&
                 by+by*b >= Math.min(uy1, uy2) &&
@@ -396,6 +397,7 @@ public class Dodge {
     public static void dodge_v4(Unit unit, Game game, Debug debug, UnitAction action) {
 
         hits = new int[Sim_v3.steps.length];
+        hitsTicks = new int[Sim_v3.steps.length];
 
         //float tick_f;
         int hit;
@@ -404,8 +406,9 @@ public class Dodge {
 
         //todo возможно проверять расстояние до центра юнита и если менее чего-то то уже точнее
 
-
+        //todo можно еще смотреть какой урон будет вокруг всем при ракете, может надо и лицом поймать
         boolean neeedCheck=false;
+        int tick;
         for (int i=0;i<hits.length;i++) {
 
             for (int b=0; b<bullets.size();b++) {
@@ -442,6 +445,7 @@ public class Dodge {
                 u.x = unit.position.x;
                 u.y = unit.position.y;
 
+                tick=1;
                 for (Vec2Double p:Sim_v3.steps[i]) {
 
                     hit = checkHit(bullet.x,
@@ -486,8 +490,12 @@ public class Dodge {
                         debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(0,0,1,0.5f)));
 
                     //todo возмоно при попадании дальше не смотреть
-                    if (hit==1)
+                    if (hit==1) {
+                        if (hitsTicks[i]>tick)
+                            hitsTicks[i]=tick;
+
                         break;
+                    }
 
                     //проверить что пуля в стене
                     //может на тик раньше быть в стене и взрыв
@@ -500,14 +508,17 @@ public class Dodge {
                         if (game.getBullets()[b].explosionParams != null) {
 
                             //todo смотреть глубину в стене и отнимать и от нее центр взрыва
-                            /*hit = checkHit(bullet.x,
-                                    bullet.y,
-                                    u.x,
-                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);*/
+                            //смотрим текущие и следующее положение может быть в промежутке взрыв
                             hit = checkHit(bullet.x,
                                     bullet.y,
-                                    p.x,
-                                    p.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
+                                    u.x,
+                                    u.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
+
+                            if (hit==0)
+                                hit = checkHit(bullet.x,
+                                        bullet.y,
+                                        p.x,
+                                        p.y, game.getBullets()[b].explosionParams.getRadius()+game.getBullets()[b].size/2d);
 
                             hits[i]+=hit*game.getBullets()[b].explosionParams.getDamage();
 
@@ -527,7 +538,9 @@ public class Dodge {
                     u.y=p.y;
 
                     //tick_f++;
+                    tick++;
                 }
+
 
             }
 

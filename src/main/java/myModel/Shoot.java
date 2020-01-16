@@ -11,6 +11,9 @@ public class Shoot {
 
     double ldx=0, ldy=0;
 
+    int lastTickShoot1=0;
+    int lastTickShoot2=0;
+
     public void setShootCells() {
 
         shootCells[4][4] = new CellChain();
@@ -187,6 +190,11 @@ public class Shoot {
 
     public void canShoot(Unit unit, Unit enemy, Debug debug, UnitAction action, Game game) {
 
+        if (unit.weapon==null)
+            return;
+
+        if (unit.weapon.typ==WeaponType.ROCKET_LAUNCHER)
+            return;
 
         //boolean canShoot = true;
         //boolean lShoot = false;
@@ -202,6 +210,13 @@ public class Shoot {
         b = new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2);
         dx = (enemy.position.x - unit.position.x);
         dy = ((enemy.position.y+Constants.UNIT_H2) - (unit.position.y+Constants.UNIT_H2));
+
+        double h=Math.sqrt((unit.position.x-enemy.position.x)*(unit.position.x-enemy.position.x)+(unit.position.y-enemy.position.y)*(unit.position.y-enemy.position.y))*Math.tan(unit.weapon.spread)*2;
+
+        if (Constants.UNIT_H/h<0.4 && (game.getCurrentTick()-lastTickShoot1<80 && (unit.id==3 || unit.id==4) || game.getCurrentTick()-lastTickShoot2<80 && (unit.id==5 || unit.id==6))) {
+            action.setAim(new Vec2Double(dx, dy));
+            return;
+        }
 
         //if (unit.weapon!=null)
             //System.out.println("la="+unit.weapon.lastAngle+" sa="+Math.atan2(dy, dx));
@@ -249,12 +264,18 @@ public class Shoot {
 
         }
 
+        boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit, debug);
+
+        if (curShoot) {
+            action.setShoot(true);
+        }
+
         //в голову
         if (!action.shoot) {
             dx = (enemy.position.x - unit.position.x);
             dy = ((enemy.position.y+Constants.UNIT_H) - (unit.position.y+Constants.UNIT_H2));
 
-            boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit, debug);
+            curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit, debug);
 
             if (curShoot) {
                 action.setShoot(true);
@@ -269,10 +290,24 @@ public class Shoot {
             dy= (float) (dy - Math.abs(dx)*Constants.BULLET_SPEED_PER_TICK/2);//0.9f;//Math.abs(dy*0.3f);
         }*/
 
+        if (!enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
+            dy-=Constants.UNIT_Y_SPEED_PER_TICK*6;
+        }
+
+        if (enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
+            dy+=Constants.UNIT_Y_SPEED_PER_TICK*6;
+        }
+
         if (Constants.ON_DEBUG)
             debug.draw(new CustomData.Line(new Vec2Float(unit.position.x, unit.position.y+Constants.UNIT_H2), new Vec2Float(unit.position.x+dx, unit.position.y+dy+Constants.UNIT_H2), 0.1f, new ColorFloat(128, 128, 0, 0.5f)));
 
         action.setAim(new Vec2Double(dx, dy));
+
+        if (action.shoot)
+            if (unit.id==3 || unit.id==4)
+                lastTickShoot1=game.getCurrentTick();
+            else
+                lastTickShoot2=game.getCurrentTick();
 
         //ldx=dx;
         //ldy=dy;

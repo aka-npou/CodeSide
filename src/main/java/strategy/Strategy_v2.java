@@ -4,6 +4,8 @@ import model.*;
 import myModel.*;
 import sims.*;
 
+import java.util.ArrayList;
+
 /**
  * Created by aka_npou on 30.11.2019.
  */
@@ -88,7 +90,9 @@ public class Strategy_v2 extends AkaNpouStrategy {
         drawSomething(unit, game, debug);
 
         //todo добавить мины. если одна и в радиусе враг или если две и в радиусе враг и могу стрелять
-        if (needDodge(unit, game, debug)) {
+        if (canMine(unit, game, debug)) {
+            unitStatus = UnitStatus.Mine;
+        } else if (needDodge(unit, game, debug)) {
             unitStatus = UnitStatus.Dodge;
         } else if (unit.weapon == null || unit.weapon.typ == WeaponType.ROCKET_LAUNCHER) {
             unitStatus = UnitStatus.GoToWeapon;
@@ -121,6 +125,9 @@ public class Strategy_v2 extends AkaNpouStrategy {
         f = System.nanoTime();
         System.out.println("dodge " + (f-s));
 
+        if (unitStatus==UnitStatus.Mine) {
+            plaintMine(unit, game, debug, action);
+        }
         if (unitStatus == UnitStatus.GoToWeapon) {
             goToWeapon(unit, game, debug, action);
         }
@@ -137,13 +144,129 @@ public class Strategy_v2 extends AkaNpouStrategy {
             goFromEnemy(unit, game, debug, action);
         }
 
+        if (unitStatus==UnitStatus.Wait) {
+            wait(unit, game, debug, action);
+        }
+
         s = System.nanoTime();
-        shoot.canShoot(unit, nearestEnemy, debug, action, game);
+        if (unitStatus!=UnitStatus.Mine)
+            shoot.canShoot(unit, nearestEnemy, debug, action, game);
         f = System.nanoTime();
         System.out.println("shoot " + (f-s));
 
 
         return action;
+    }
+
+    private void wait(Unit unit, Game game, Debug debug, UnitAction action) {
+
+        int minHit=10000;
+        for (int h:Dodge.hits) {
+            if (h<minHit)
+                minHit=h;
+        }
+
+        Vec2Double minP = null;
+
+        for (int i=0;i<Dodge.hits.length;i++) {
+            if (Dodge.hits[i]==minHit) {
+                minP = Sim_v3.steps[i][0];
+                break;
+            }
+        }
+
+
+        action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
+        if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
+            action.jump=true;
+
+        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d && Sim_v3.steps[mI][2].y<Sim_v3.steps[mI][1].y)
+            action.jumpDown=true;
+
+    }
+
+    private boolean canMine(Unit unit, Game game, Debug debug) {
+
+        if (unit.onGround) {
+            if (unit.mines!=0) {
+
+                if (unit.weapon!=null && (unit.weapon.fireTimer==null || unit.weapon.fireTimer<Constants.TICK*10)) {
+
+                    int rMy=0;
+                    int rEnemy=0;
+
+                    int hMy=0;
+                    int hEnemy=0;
+                    double radius=2.4;
+
+                    for (Unit u:game.getUnits()) {
+
+                        if (u.playerId==unit.playerId) {
+                            hMy+=u.health;
+                        } else {
+                            hEnemy+=u.health;
+                        }
+
+                        if ((Math.abs(unit.position.x-u.position.x)<radius && Math.abs(unit.position.y-u.position.y)<radius) || (Math.abs(unit.position.x-u.position.x-Constants.UNIT_H)<radius && Math.abs(unit.position.y-u.position.y-Constants.UNIT_H)<radius)) {
+                            if (u.health<unit.mines*game.getProperties().getMineExplosionParams().getDamage()) {
+                                if (u.playerId==unit.playerId) {
+                                    //hMy-=u.health;
+                                } else {
+                                    //hEnemy-=u.health;
+                                    rMy+=u.health+game.getProperties().getKillScore();
+                                }
+                            } else {
+                                if (u.playerId==unit.playerId) {
+                                    hMy-=game.getProperties().getMineExplosionParams().getDamage();
+                                } else {
+                                    hEnemy-=game.getProperties().getMineExplosionParams().getDamage();
+                                    rMy+=game.getProperties().getMineExplosionParams().getDamage();
+                                }
+                            }
+                        }
+
+                    }
+                    System.out.println("t="+game.getCurrentTick()+" hMy="+hMy+" hE="+hEnemy+" rMy="+rMy+" rE="+rEnemy);
+
+                    if (hMy>0 && rMy>1000) {
+                        return true;
+                    }
+
+                }
+
+            }
+        }
+
+        int mines=0;
+        for (Mine m:game.getMines()) {
+            if (m.getPlayerId()==unit.playerId)
+                mines++;
+        }
+
+        if (mines!=0)
+            return true;
+
+
+        return false;
+    }
+
+    private void plaintMine(Unit unit, Game game, Debug debug, UnitAction action) {
+
+        int mines=0;
+        for (Mine m:game.getMines()) {
+            if (m.getPlayerId()==unit.playerId)
+                mines++;
+        }
+
+        if (mines>=1 && unit.mines==0) {
+            action.aim.x=0;
+            action.aim.y=-10;
+            action.shoot=true;
+        } else {
+            action.plantMine=true;
+        }
+
+        action.velocity=0;
     }
 
     private void goToWeapon(Unit unit, Game game, Debug debug, UnitAction action) {
@@ -181,16 +304,41 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private void goToHP(Unit unit, Game game, Debug debug, UnitAction action) {
         //todo посмотреть расстояния всех до всех аптечек и выбрать лучшую
+
+
         LootBox nearestHP = null;
+        int enemyL;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 0) {
                 /*if (nearestHP == null || distanceSqr(unit.getPosition(),
                         lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestHP.getPosition())) {
                     nearestHP = lootBox;
                 }*/
+                enemyL=100;
+                for (Unit u:game.getUnits()) {
+                    if (unit.playerId == u.playerId)
+                        continue;
+
+                    if(enemyL>World.maps.get((int)lootBox.position.x*10+(int)lootBox.position.y*10*World.x).map[(int)u.position.y][(int)u.position.x]) {
+                        enemyL=World.maps.get((int)lootBox.position.x*10+(int)lootBox.position.y*10*World.x).map[(int)u.position.y][(int)u.position.x];
+                    }
+                }
                 if (nearestHP == null || World.liMap[(int)lootBox.position.y][(int)lootBox.position.x]<World.liMap[(int)nearestHP.position.y][(int)nearestHP.position.x])
-                    nearestHP = lootBox;
+                    if (enemyL>=World.maps.get((int)lootBox.position.x*10+(int)lootBox.position.y*10*World.x).map[(int)unit.position.y][(int)unit.position.x])
+                        nearestHP = lootBox;
             }
+        }
+
+        //нет аптечки ближе к нам чем к врагу, то след статус
+        if (nearestHP==null) {
+            if (enemyNearly(unit, game, debug)) {
+                unitStatus = UnitStatus.GoFromEnemy;
+            } else if (enemyFar(unit, game, debug)) {
+                unitStatus = UnitStatus.GoToEnemy;
+            } else
+                unitStatus = UnitStatus.Wait;
+
+            return;
         }
 
         Vec2Double minP = getP(nearestHP.position, unit, game, debug, action, true, null);
@@ -278,13 +426,13 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private boolean enemyNearly(Unit unit, Game game, Debug debug) {
 
-        return distanceSqr(unit.position, nearestEnemy.position) < 64;
+        return distanceSqr(unit.position, nearestEnemy.position) < 49;
 
     }
 
     private boolean enemyFar(Unit unit, Game game, Debug debug) {
 
-        return distanceSqr(unit.position, nearestEnemy.position) >= 64;
+        return distanceSqr(unit.position, nearestEnemy.position) >= 81;
     }
 
     private void getNearestEnemy(Unit unit, Game game, Debug debug) {
@@ -352,6 +500,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     Vec2Double getP(Vec2Double targetPosition, Unit unit, Game game, Debug debug, UnitAction action, boolean goTo, Unit enemy) {
 
+        //выбирать те, где не надо падать или прыгать
         if (enemy==null) {
             world.print(World.maps.get((int) targetPosition.x * 10 + (int) targetPosition.y * 10 * World.x).map, debug);
             world.printD(World.maps.get((int) targetPosition.x * 10 + (int) targetPosition.y * 10 * World.x).map, debug);
@@ -370,12 +519,14 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         Vec2Double[] ps = new Vec2Double[Sim_v3.steps.length];
 
+        int chainlength = goTo?Sim_v3.steps[0].length:Sim_v3.steps[0].length/3;
         for (int i=0;i<Sim_v3.steps.length;i++) {
 
             int tick=1;
             arrayML[i]=goTo?500*500:-1;
             arrayTL[i]=-1;
-            for (Vec2Double p:Sim_v3.steps[i]) {
+            //for (Vec2Double p:Sim_v3.steps[i]) {
+            for (int p=0;p<chainlength;p++) {
                 /*if (goTo && arrayML[i] > (int)(distanceSqr(p, targetPosition)*100) || !goTo && arrayML[i] < (int)(distanceSqr(p, targetPosition)*100)) {
                     arrayML[i] = (int)(distanceSqr(p, targetPosition)*100);
                     //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
@@ -383,12 +534,12 @@ public class Strategy_v2 extends AkaNpouStrategy {
                     ps[i]=p;
                 }*/
 
-                L = World.maps.get(id).map[(int)p.y][(int)p.x];
+                L = World.maps.get(id).map[(int)Sim_v3.steps[i][p].y][(int)Sim_v3.steps[i][p].x];
 
                 if (goTo && arrayML[i]>L || !goTo && arrayML[i]<L) {
                     arrayML[i] = L;
                     arrayTL[i] = tick;
-                    ps[i]=p;
+                    ps[i]=Sim_v3.steps[i][p];
 
                     if (Constants.ON_DEBUG)
                         debug.draw(new CustomData.Rect(new Vec2Float(ps[i].x-0.05f, ps[i].y-0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,1,1,0.5f)));
@@ -416,26 +567,126 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         Vec2Double firstStep = null;
 
-        for (int i=0;i<arrayML.length;i++) {
-            if (Dodge.hits[i]==minHit) {
-                if (mI==-1) {
-                    mI=i;
-                    mTick=arrayTL[i];
+        for (int i = 0; i < arrayML.length; i++) {
+            if (Dodge.hits[i] == minHit) {
+                if (mI == -1) {
+                    mI = i;
+                    mTick = arrayTL[i];
 
                     continue;
                 }
 
-                if(goTo && arrayML[i]<arrayML[mI] || !goTo && arrayML[i]>arrayML[mI]) {
-                    mI=i;
-                    mTick=arrayTL[i];
-                } else if (arrayML[i]==arrayML[mI]) {
-                    if (arrayTL[i]<mTick) {
-                        mI=i;
-                        mTick=arrayTL[i];
+                if (goTo && arrayML[i] < arrayML[mI] || !goTo && arrayML[i] > arrayML[mI]) {
+                    mI = i;
+                    mTick = arrayTL[i];
+                } else if (arrayML[i] == arrayML[mI]) {
+                    if (arrayTL[i] < mTick) {
+                        mI = i;
+                        mTick = arrayTL[i];
                     }
                 }
             }
         }
+
+//        if (enemy==null) {
+//            for (int i = 0; i < arrayML.length; i++) {
+//                if (Dodge.hits[i] == minHit) {
+//                    if (mI == -1) {
+//                        mI = i;
+//                        mTick = arrayTL[i];
+//
+//                        continue;
+//                    }
+//
+//                    if (goTo && arrayML[i] < arrayML[mI] || !goTo && arrayML[i] > arrayML[mI]) {
+//                        mI = i;
+//                        mTick = arrayTL[i];
+//                    } else if (arrayML[i] == arrayML[mI]) {
+//                        if (arrayTL[i] < mTick) {
+//                            mI = i;
+//                            mTick = arrayTL[i];
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            //надо идти не в притык, а где расстояние норм и не надо прыгать/падать
+//            int enemyL=9;
+//
+//            if (World.maps.get(id).map[(int)unit.position.y][(int)unit.position.x]<12) {
+//
+//                ArrayList<Integer> steps = new ArrayList<>();
+//                ArrayList<Integer> stepsV = new ArrayList<>();
+//
+//
+//                int maxV = 0;
+//                for (int i = 0; i < arrayML.length; i++) {
+//                    if (Dodge.hits[i] == minHit) {
+//
+//                        if (goTo && arrayML[i] < enemyL || !goTo && arrayML[i] > enemyL) {
+//                            //если мы сваливаем, то не берем такие шаги где стоим
+//                            if (!goTo && Math.abs(Sim_v3.steps[i][0].y - unit.position.y) < Constants.EPS * 2 && Math.abs(Sim_v3.steps[i][0].x - unit.position.x) < Constants.EPS * 2)
+//                                continue;
+//
+//                            //если мы когда-то дойдем до врага, а сейчас стоим то пропускаем такой ход
+//                            if (goTo && Math.abs(Sim_v3.steps[i][0].y - unit.position.y) < Constants.EPS * 2 && Math.abs(Sim_v3.steps[i][0].x - unit.position.x) < Constants.EPS * 2 && arrayTL[i] > 1)
+//                                continue;
+//
+//                            steps.add(i);
+//
+//                            int v = 3;
+//
+//                            if (Sim_v3.steps[i][0].y - unit.position.y > Constants.UNIT_Y_SPEED_PER_TICK / 2d)
+//                                v--;
+//
+//                            if (Sim_v3.steps[i][0].y - unit.position.y < -Constants.UNIT_Y_SPEED_PER_TICK / 2d && Sim_v3.steps[i][2].y < Sim_v3.steps[i][1].y)
+//                                v--;
+//
+//                            stepsV.add(v);
+//
+//                            maxV = Math.max(v, maxV);
+//
+//                        }
+//
+//                    }
+//                }
+//
+//                for (int i = 0; i < steps.size(); i++) {
+//                    if (stepsV.get(i) == maxV) {
+//                        mI = steps.get(i);
+//                        mTick = 1;
+//                        break;
+//                    }
+//                }
+//
+//            }
+//
+//            if (mI==-1) {
+//
+//                for (int i = 0; i < arrayML.length; i++) {
+//                    if (Dodge.hits[i] == minHit) {
+//                        if (mI == -1) {
+//                            mI = i;
+//                            mTick = arrayTL[i];
+//
+//                            continue;
+//                        }
+//
+//                        if (goTo && arrayML[i] < arrayML[mI] || !goTo && arrayML[i] > arrayML[mI]) {
+//                            mI = i;
+//                            mTick = arrayTL[i];
+//                        } else if (arrayML[i] == arrayML[mI]) {
+//                            if (arrayTL[i] < mTick) {
+//                                mI = i;
+//                                mTick = arrayTL[i];
+//                            }
+//                        }
+//                    }
+//                }
+//
+//            }
+//
+//        }
 
         firstStep = Sim_v3.steps[mI][0];
         if (Constants.ON_DEBUG)

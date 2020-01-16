@@ -9,7 +9,8 @@ public enum UnitStatus {
     GoToHP(2),
     GoToEnemy(3),
     GoFromEnemy(4),
-    Dodge(5);
+    Dodge(5),
+    Mine(6);
 
     public int discriminant;
 
