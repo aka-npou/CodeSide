@@ -191,8 +191,6 @@ public class Dodge {
         Vec2Double bullet = new Vec2Double();
         Vec2Double u = new Vec2Double();
 
-        //todo возможно проверять расстояние до центра юнита и если менее чего-то то уже точнее
-
 
         boolean neeedCheck=false;
         for (int i=0;i<hits.length;i++) {

@@ -8,9 +8,14 @@ import strategy.*;
 
 public class MyStrategy {
 
+    long allTime=0;
+    long s,f;
+
     AkaNpouStrategy akaNpouStrategy = new Strategy_v2();
 
     public UnitAction getAction(Unit unit, Game game, Debug debug) {
+
+        s = System.nanoTime();
 
         UnitAction action = akaNpouStrategy.getAction(unit, game, debug);
 
@@ -26,6 +31,13 @@ public class MyStrategy {
             if (unit.weapon!=null)
                 debug.draw(new CustomData.Log("sp="+unit.weapon.spread+" la="+unit.weapon.lastAngle+" mb="+unit.weapon.magazine));
         }
+
+        f = System.nanoTime();
+        allTime+=(f-s);
+
+        debug.draw(new CustomData.PlacedText(""+allTime, new Vec2Float(0, -0.5f), TextAlignment.CENTER,10f, new ColorFloat(1,1,1,1)));
+        System.out.println("all "+allTime);
+
         return action;
     }
 

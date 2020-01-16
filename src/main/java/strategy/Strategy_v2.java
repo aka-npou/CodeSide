@@ -26,7 +26,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
 
 
-        if (game.getCurrentTick() == 0) {
+        if (game.getCurrentTick() == 0 && Constants.INIT) {
             world.setMap(game.getLevel());
             world.setPatencyMap(game.getLevel(), unit.position);
 
@@ -42,6 +42,13 @@ public class Strategy_v2 extends AkaNpouStrategy {
             world.setMaps(game, unit);
             f = System.nanoTime();
             System.out.println("maps " + (f - s));
+
+            s = System.nanoTime();
+            Sim_v3.init();
+            f = System.nanoTime();
+            System.out.println("i s " + (f - s));
+
+            Constants.INIT=false;
 
             //чтобы не было ошибок нулевой тик стоим, тк он в падении
             UnitAction action = new UnitAction();
@@ -80,6 +87,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         drawSomething(unit, game, debug);
 
+        //todo добавить мины. если одна и в радиусе враг или если две и в радиусе враг и могу стрелять
         if (needDodge(unit, game, debug)) {
             unitStatus = UnitStatus.Dodge;
         } else if (unit.weapon == null || unit.weapon.typ == WeaponType.ROCKET_LAUNCHER) {
@@ -172,6 +180,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
     }
 
     private void goToHP(Unit unit, Game game, Debug debug, UnitAction action) {
+        //todo посмотреть расстояния всех до всех аптечек и выбрать лучшую
         LootBox nearestHP = null;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 0) {

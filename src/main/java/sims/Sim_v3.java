@@ -53,7 +53,7 @@ public class Sim_v3 {
                 || (World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x)] == 3 ||
                     World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK+Constants.UNIT_H2)][(int)(p.x)] == 3)) {
 
-                p.y = (int) p.y;
+                p.y = (int) p.y + Constants.EPS;
                 jumpState.maxTime = Constants.JUMP_TIME;
                 jumpState.canJump = true;
                 jumpState.canCancel = true;
@@ -76,7 +76,9 @@ public class Sim_v3 {
                 }
                 return;
             }
-            steps[chain][tick] = new Vec2Double(p.x, p.y);
+            //steps[chain][tick] = new Vec2Double(p.x, p.y);
+            steps[chain][tick].x=p.x;
+            steps[chain][tick].y=p.y;
             //stepsMT[chain][tick] = jumpState.maxTime;
 
             if (Constants.ON_DEBUG)
@@ -818,6 +820,16 @@ public class Sim_v3 {
                 return;
             }
         }
+    }
+
+    public static void init() {
+
+        for (int i=0;i<steps.length;i++) {
+            for (int j=0;j<ticks;j++) {
+                steps[i][j]=new Vec2Double();
+            }
+        }
+
     }
 
 
