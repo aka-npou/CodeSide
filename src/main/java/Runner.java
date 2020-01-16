@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.io.BufferedOutputStream;
 
-//import model.Debug;
+import model.Debug;
 import util.StreamUtil;
 
 public class Runner {
@@ -25,7 +25,7 @@ public class Runner {
 
     void run() throws IOException {
         MyStrategy myStrategy = new MyStrategy();
-        model.Debug debug = new model.Debug(outputStream);
+        Debug debug = new Debug(outputStream);
         while (true) {
             model.ServerMessageGame message = model.ServerMessageGame.readFrom(inputStream);
             model.PlayerView playerView = message.getPlayerView();

@@ -28,7 +28,7 @@ public class Strategy_v0 extends AkaNpouStrategy {
 
         if (needDodge(unit, game, debug)) {
             unitStatus = UnitStatus.Dodge;
-        } else if (unit.weapon == null) {
+        } else if (unit.weapon == null || unit.weapon.typ == WeaponType.ROCKET_LAUNCHER) {
             unitStatus = UnitStatus.GoToWeapon;
         } else if (unit.health<game.getProperties().getUnitMaxHealth() && mapHaveHP(game)) {
             unitStatus = UnitStatus.GoToHP;
@@ -85,14 +85,17 @@ public class Strategy_v0 extends AkaNpouStrategy {
         LootBox nearestWeapon = null;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 1) {
-                if (nearestWeapon == null || distanceSqr(unit.getPosition(),
-                        lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) {
-                    nearestWeapon = lootBox;
-                }
+                Item.Weapon w = (Item.Weapon)lootBox.item;
+                if (w.getWeaponType() !=WeaponType.ROCKET_LAUNCHER)
+                    if (nearestWeapon == null || distanceSqr(unit.getPosition(),
+                            lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) {
+                        nearestWeapon = lootBox;
+                    }
             }
         }
 
         action.setVelocity((nearestWeapon.position.x - unit.position.x)*100f);
+        action.setSwapWeapon(true);
 
         jump(unit, game, debug, action, nearestWeapon.position);
     }
@@ -147,7 +150,9 @@ public class Strategy_v0 extends AkaNpouStrategy {
         else
             action.setVelocity(-10);
 
-        jump(unit, game, debug, action, nearestEnemy.position);
+        //jump(unit, game, debug, action, nearestEnemy.position);
+        action.setJump(true);
+        action.setJumpDown(true);
     }
 
 
@@ -163,8 +168,22 @@ public class Strategy_v0 extends AkaNpouStrategy {
             jump = true;
         }
 
+        Unit enemy = null;
+
+        for (Unit u:game.getUnits()) {
+            if (u.getPlayerId() != unit.getPlayerId()) {
+                enemy = u;
+                break;
+            }
+        }
+
         action.jump = jump;
         action.jumpDown = !jump;
+
+        if (unitStatus == UnitStatus.GoToHP && Math.abs(enemy.position.x-targetPos.x) < Math.abs(unit.position.x-targetPos.x)) {
+            action.jump = true;
+            action.jumpDown = true;
+        }
 
     }
 

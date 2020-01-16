@@ -1,6 +1,7 @@
 package myModel;
 
 import model.*;
+import sims.Sim_v1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,15 +83,15 @@ public class Dodge {
         return false;
     }
 
-    private static boolean checkHit(double bx, double by, double ux, double uy) {
+    private static int checkHit(double bx, double by, double ux, double uy) {
 
         if (bx+0.1f > ux-Constants.UNIT_W2 &&
                 bx-0.1f < ux+Constants.UNIT_W2 &&
                 by+0.1f > uy &&
                 by-0.1f < uy+Constants.UNIT_H)
-            return true;
+            return 1;
 
-        return false;
+        return 0;
     }
 
     //todo хранить все координаты приблизительно в инт до 5 знака и считать пули один раз их скорости
@@ -126,9 +127,8 @@ public class Dodge {
             }
         }*/
 
-        ArrayList<Vec2Float> posiblePosition = new ArrayList<>();
-        double vx = game.getProperties().getUnitMaxHorizontalSpeed()/game.getProperties().getTicksPerSecond();
-        double vy = game.getProperties().getUnitJumpSpeed()/game.getProperties().getTicksPerSecond();
+        double vx = Constants.UNIT_X_SPEED_PER_TICK;//game.getProperties().getUnitMaxHorizontalSpeed()/game.getProperties().getTicksPerSecond();
+        double vy = Constants.UNIT_Y_SPEED_PER_TICK;//game.getProperties().getUnitJumpSpeed()/game.getProperties().getTicksPerSecond();
         float size = 0.1f;
         float tick_f = 0;
 
@@ -138,71 +138,179 @@ public class Dodge {
         //для каждого луча хранить попадания
         //идти в меньший урон
 
-        for (int tick = 0; tick < 12; tick++) {
+        float checkHit;
+        float[] steps = new float[4];
+        Vec2Double p = new Vec2Double();
+        boolean isBreak;
 
-            tick_f = tick;
-            
-            for (int i=0; i<bullets.size();i++) {
-                debug.draw(new CustomData.Rect(new Vec2Float(game.getBullets()[i].position.x + bullets.get(i).x * tick_f, game.getBullets()[i].position.y + bullets.get(i).y * tick_f), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,1,1,1)));
+        isBreak=false;
+        checkHit=0;
+        p.x = unit.position.x;
+        p.y = unit.position.y;
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x + vx * tick_f,
-                        unit.position.y + vy * tick_f))
-                    posiblePosition.add(new Vec2Float(unit.position.x + vx * tick_f, unit.position.y + vy * tick_f));
+        vy=0f;
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x - vx * tick_f,
-                        unit.position.y + vy * tick_f))
-                    posiblePosition.add(new Vec2Float(unit.position.x - vx * tick_f, unit.position.y + vy * tick_f));
+        for (int tick = 1; tick < 12; tick++) {
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x + vx * tick_f,
-                        unit.position.y - vy * tick_f))
-                    posiblePosition.add(new Vec2Float(unit.position.x + vx * tick_f, unit.position.y - vy * tick_f));
+            if (vx != 0) {
+                p.x += vx;
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x - vx * tick_f,
-                        unit.position.y - vy * tick_f))
-                    posiblePosition.add(new Vec2Float(unit.position.x - vx * tick_f, unit.position.y - vy * tick_f));
+                debug.draw(new CustomData.Rect(new Vec2Float(p.x, p.y), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x + vx * tick_f,
-                        unit.position.y))
-                    posiblePosition.add(new Vec2Float(unit.position.x + vx * tick_f, unit.position.y));
+                if (World.map[(int)(p.y)][(int)(p.x + Constants.UNIT_W2)] == 1 ||
+                        World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x + Constants.UNIT_W2)] == 1 ||
+                        World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x + Constants.UNIT_W2)] == 1) {
+                    p.x -= vx;
+                    vx = 0d;
+                }
 
-                if (!checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
-                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
-                        unit.position.x - vx * tick_f,
-                        unit.position.y))
-                    posiblePosition.add(new Vec2Float(unit.position.x - vx * tick_f, unit.position.y));
+                //если внизу пусто то падаем и всё
+                if (World.map[(int)(p.y-1)][(int)(p.x + Constants.UNIT_W2)] == 0 && World.map[(int)(p.y-1)][(int)(p.x - Constants.UNIT_W2)] == 0) {
+                    vy = Constants.UNIT_Y_SPEED_PER_TICK;
+                }
             }
 
-            /*debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x + tick * vx, unit.position.y), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x - tick * vx, unit.position.y), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
+            p.y+=vy;
 
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x + tick * vx, unit.position.y + tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x - tick * vx, unit.position.y + tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x + tick * vx, unit.position.y - tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x - tick * vx, unit.position.y - tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-
-
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x, unit.position.y + tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
-            debug.draw(new CustomData.Rect(new Vec2Float(unit.position.x, unit.position.y - tick * vy), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));*/
-
+            tick_f=tick;
+            for (int i=0; i<bullets.size();i++) {
+                checkHit += checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
+                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
+                        p.x,
+                        p.y);
+            }
 
         }
 
-        System.out.println("posiblePosition " + posiblePosition.size());
-        for (Vec2Float p:posiblePosition) {
-            debug.draw(new CustomData.Rect(p, new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
+        if (!isBreak)
+            checkHit /=12f;
+
+
+        steps[0] = checkHit;
+
+        vx = Constants.UNIT_X_SPEED_PER_TICK;
+        vy = Constants.UNIT_Y_SPEED_PER_TICK;
+
+        isBreak=false;
+        checkHit=0;
+        p.x = unit.position.x;
+        p.y = unit.position.y;
+
+        for (int tick = 1; tick < 12; tick++) {
+
+            if (vx != 0) {
+                p.x -= vx;
+
+                debug.draw(new CustomData.Rect(new Vec2Float(p.x, p.y), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
+
+                if (World.map[(int)(p.y)][(int)(p.x - Constants.UNIT_W2)] == 3 ||
+                        World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x - Constants.UNIT_W2)] == 3 ||
+                        World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x - Constants.UNIT_W2)] == 3) {
+                    p.x += vx;
+                    vx = 0d;
+                }
+
+                //если внизу пусто то падаем и всё
+                if (World.map[(int)(p.y-1)][(int)(p.x + Constants.UNIT_W2)] == 0 && World.map[(int)(p.y-1)][(int)(p.x - Constants.UNIT_W2)] == 0) {
+                    checkHit /= tick_f==0f?1f:tick_f;
+                    isBreak=true;
+                    break;
+                }
+            }
+
+            tick_f=tick;
+            for (int i=0; i<bullets.size();i++) {
+                checkHit += checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
+                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
+                        p.x,
+                        p.y);
+            }
+
         }
 
+        if (!isBreak)
+            checkHit /=12f;
+
+        steps[1] = checkHit;
+
+        vx = Constants.UNIT_X_SPEED_PER_TICK;
+        vy = Constants.UNIT_Y_SPEED_PER_TICK;
+
+        isBreak=false;
+        checkHit=0;
+        p.x = unit.position.x;
+        p.y = unit.position.y;
+
+        for (int tick = 0; tick < 12; tick++) {
+
+            p.y += vy;
+
+            debug.draw(new CustomData.Rect(new Vec2Float(p.x, p.y), new Vec2Float(size, size), new ColorFloat(0,1,0,1)));
+
+            if (World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x + Constants.UNIT_W2)] == 3 ||
+                    World.map[(int)(p.y + Constants.UNIT_H)][(int)(p.x + Constants.UNIT_W2)] == 3) {
+                checkHit /= tick_f==0f?1f:tick_f;
+                isBreak=true;
+                break;
+            }
+
+            tick_f=tick;
+            for (int i=0; i<bullets.size();i++) {
+                checkHit += checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
+                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
+                        unit.position.x,
+                        unit.position.y + vy * tick_f);
+            }
+
+        }
+
+        if (!isBreak)
+            checkHit /=12f;
+
+        steps[2] = checkHit;
+
+        vx = Constants.UNIT_X_SPEED_PER_TICK;
+        vy = Constants.UNIT_Y_SPEED_PER_TICK;
+
+        isBreak=false;
+        checkHit=0;
+        p.x = unit.position.x;
+        p.y = unit.position.y;
+
+        for (int tick = 0; tick < 12; tick++) {
+
+            if (vy !=0f) {
+                p.y -= vy;
+
+                debug.draw(new CustomData.Rect(new Vec2Float(p.x, p.y), new Vec2Float(size, size), new ColorFloat(0, 1, 0, 1)));
+
+                if (World.map[(int) (p.y)][(int) (p.x + Constants.UNIT_W2)] == 1 ||
+                        World.map[(int) (p.y)][(int) (p.x + Constants.UNIT_W2)] == 1) {
+//                checkHit /= tick_f==0f?1f:tick_f;
+//                isBreak=true;
+//                break;
+                    vy = 0f;
+                }
+            }
+
+            tick_f=tick;
+            for (int i=0; i<bullets.size();i++) {
+                checkHit += checkHit(game.getBullets()[i].position.x + bullets.get(i).x * tick_f,
+                        game.getBullets()[i].position.y + bullets.get(i).y * tick_f,
+                        p.x,
+                        p.y);
+            }
+
+        }
+
+        if (!isBreak)
+            checkHit /=12f;
+
+        steps[3] = checkHit;
+
+        for (float i:steps) {
+            System.out.println("hit = " + i);
+        }
 
     }
 }

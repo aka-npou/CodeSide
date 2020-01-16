@@ -16,5 +16,10 @@ public class Constants {
     public static final double UNIT_Y_SPEED_PER_SECOND = 10d;
     public static final double UNIT_Y_SPEED_PER_TICK = 10d/60d;
 
+    public static final double JUMP_TIME = 0.55d;
+    public static final double JUMP_TIME_PAD = 0.525d;
+
+    public static final double TICK = 1d/60d;
+
     //todo дописать все константы из game и тд
 }

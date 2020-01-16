@@ -3,16 +3,16 @@ package model;
 import util.StreamUtil;
 
 public class JumpState {
-    private boolean canJump;
+    public boolean canJump;
     public boolean isCanJump() { return canJump; }
     public void setCanJump(boolean canJump) { this.canJump = canJump; }
-    private double speed;
+    public double speed;
     public double getSpeed() { return speed; }
     public void setSpeed(double speed) { this.speed = speed; }
-    private double maxTime;
+    public double maxTime;
     public double getMaxTime() { return maxTime; }
     public void setMaxTime(double maxTime) { this.maxTime = maxTime; }
-    private boolean canCancel;
+    public boolean canCancel;
     public boolean isCanCancel() { return canCancel; }
     public void setCanCancel(boolean canCancel) { this.canCancel = canCancel; }
     public JumpState() {}
@@ -22,6 +22,14 @@ public class JumpState {
         this.maxTime = maxTime;
         this.canCancel = canCancel;
     }
+
+    public JumpState(JumpState jumpState) {
+        this.canJump    = jumpState.canJump;
+        this.speed      = jumpState.speed;
+        this.maxTime    = jumpState.maxTime;
+        this.canCancel  = jumpState.canCancel;
+    }
+
     public static JumpState readFrom(java.io.InputStream stream) throws java.io.IOException {
         JumpState result = new JumpState();
         result.canJump = StreamUtil.readBoolean(stream);

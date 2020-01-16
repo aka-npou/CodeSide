@@ -362,9 +362,10 @@ public class Shoot {
             debug.draw(new CustomData.Rect(new Vec2Float((float)enemy.getPosition().x-0.45f, (float)enemy.getPosition().y), new Vec2Float(0.9f, 1.8f), new ColorFloat(canShoot&&lShoot?0:255, canShoot&&lShoot?255:0,0,0.5f)));
 
         if (canShoot && lShoot) {
-            action.setAim(new Vec2Double(dx, dy));
             action.setShoot(true);
         }
+
+        action.setAim(new Vec2Double(dx, dy));
     }
 
     private boolean check(Vec2Float b) {
