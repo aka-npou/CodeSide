@@ -7,8 +7,8 @@ public class JumpState {
     public boolean isCanJump() { return canJump; }
     public void setCanJump(boolean canJump) { this.canJump = canJump; }
     public double speed;
-    public double getSpeed() { return speed; }
-    public void setSpeed(double speed) { this.speed = speed; }
+    //public double getSpeed() { return speed; }
+    //public void setSpeed(double speed) { this.speed = speed; }
     public double maxTime;
     public double getMaxTime() { return maxTime; }
     public void setMaxTime(double maxTime) { this.maxTime = maxTime; }
@@ -16,12 +16,12 @@ public class JumpState {
     public boolean isCanCancel() { return canCancel; }
     public void setCanCancel(boolean canCancel) { this.canCancel = canCancel; }
     public JumpState() {}
-    public JumpState(boolean canJump, double speed, double maxTime, boolean canCancel) {
+    /*public JumpState(boolean canJump, double speed, double maxTime, boolean canCancel) {
         this.canJump = canJump;
         this.speed = speed;
         this.maxTime = maxTime;
         this.canCancel = canCancel;
-    }
+    }*/
 
     public JumpState(JumpState jumpState) {
         this.canJump    = jumpState.canJump;

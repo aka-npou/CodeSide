@@ -38,7 +38,7 @@ public class World {
 
     }
 
-    public void setPatencyMap(Level level, Vec2Float unit) {
+    public void setPatencyMap(Level level, Vec2Double unit) {
 
         patencyMap = new int[y][x];
 
@@ -165,7 +165,7 @@ public class World {
 
     }
 
-    public void setLiMap(UnitF unit) {
+    public void setLiMap(Unit unit) {
         Li.getLiMap(patencyMap, new Vec2Int((int)unit.position.x, (int)unit.position.y), liMap);
     }
 

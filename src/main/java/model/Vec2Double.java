@@ -25,8 +25,10 @@ public class Vec2Double {
     }
     public static Vec2Float readFromF(java.io.InputStream stream) throws java.io.IOException {
         Vec2Float result = new Vec2Float();
-        result.x = (float)StreamUtil.readDouble(stream);
-        result.y = (float)StreamUtil.readDouble(stream);
+        double x = StreamUtil.readDouble(stream);
+        result.x = (float)x;
+        double y = StreamUtil.readDouble(stream);
+        result.y = (float)y;
         return result;
     }
     public void writeTo(java.io.OutputStream stream) throws java.io.IOException {

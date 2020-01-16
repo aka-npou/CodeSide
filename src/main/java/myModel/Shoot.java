@@ -9,7 +9,7 @@ public class Shoot {
 
     public CellChain[][] shootCells = new CellChain[5][5];
 
-    float ldx=0, ldy=0;
+    double ldx=0, ldy=0;
 
     public void setShootCells() {
 
@@ -185,94 +185,37 @@ public class Shoot {
 
     }
 
-    public void canShoot(UnitF unit, UnitF enemy, Debug debug, UnitAction action) {
+    public void canShoot(Unit unit, Unit enemy, Debug debug, UnitAction action, Game game) {
 
 
         boolean canShoot = true;
         boolean lShoot = false;
 
         int ls=150;
-        Vec2Float b;
+        Vec2Double b;
 
-        float dx, dy, a, l;
-        Vec2Float v;
-
-        /*b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
-        dx = (float) (enemy.position.x-0.5f - unit.position.x);
-        dy = (float) ((enemy.position.y+1.7f) - (unit.position.y+0.9f));
-        //System.out.println("q " + dx + " " + dy);
-
-        l = (float) Math.sqrt(dx*dx + dy*dy);
-        v = new Vec2Float(0.3f * dx/l, 0.3f * dy/l);
-
-        for (int i=0;i<ls;i++) {
-            debug.draw(new CustomData.Line(new Vec2Float(b.x, b.y), new Vec2Float(b.x+0.1f, b.y+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
-            b.x+=v.x;
-            b.y+=v.y;
-        }
-
-
-        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
-        dx = (float) (enemy.position.x+0.5f - unit.position.x);
-        dy = (float) ((enemy.position.y+1.7f) - (unit.position.y+0.9f));
-        //System.out.println("q " + dx + " " + dy);
-
-        l = (float) Math.sqrt(dx*dx + dy*dy);
-        v = new Vec2Float(0.3f * dx/l, 0.3f * dy/l);
-
-        for (int i=0;i<ls;i++) {
-            debug.draw(new CustomData.Line(new Vec2Float(b.x, b.y), new Vec2Float(b.x+0.1f, b.y+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
-            b.x+=v.x;
-            b.y+=v.y;
-        }
-
-        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
-        dx = (float) (enemy.position.x-0.5f - unit.position.x);
-        dy = (float) ((enemy.position.y+0.1f) - (unit.position.y+0.9f));
-        //System.out.println("q " + dx + " " + dy);
-
-        l = (float) Math.sqrt(dx*dx + dy*dy);
-        v = new Vec2Float(0.3f * dx/l, 0.3f * dy/l);
-
-        for (int i=0;i<ls;i++) {
-            debug.draw(new CustomData.Line(new Vec2Float(b.x, b.y), new Vec2Float(b.x+0.1f, b.y+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
-            b.x+=v.x;
-            b.y+=v.y;
-        }
-
-        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
-        dx = (float) (enemy.position.x+0.5f - unit.position.x);
-        dy = (float) ((enemy.position.y+0.1f) - (unit.position.y+0.9f));
-        //System.out.println("q " + dx + " " + dy);
-
-        l = (float) Math.sqrt(dx*dx + dy*dy);
-        v = new Vec2Float(0.3f * dx/l, 0.3f * dy/l);
-
-        for (int i=0;i<ls;i++) {
-            debug.draw(new CustomData.Line(new Vec2Float(b.x, b.y), new Vec2Float(b.x+0.1f, b.y+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
-            b.x+=v.x;
-            b.y+=v.y;
-        }*/
+        double dx, dy, a, l;
+        Vec2Double v;
 
         //todo если старый угол в цели то не менять
         //todo опережение еще добавить
-        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2);
-        dx = (float) (enemy.position.x - unit.position.x);
-        dy = (float) ((enemy.position.y+Constants.UNIT_H2) - (unit.position.y+Constants.UNIT_H2));
+        b = new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2);
+        dx = (enemy.position.x - unit.position.x);
+        dy = ((enemy.position.y+Constants.UNIT_H2) - (unit.position.y+Constants.UNIT_H2));
 
         if (unit.weapon!=null)
             //System.out.println("la="+unit.weapon.lastAngle+" sa="+Math.atan2(dy, dx));
 
         if (unit.weapon!=null && ldx!=0 && ldy!=0) {
 
-            float d = (float) Math.sqrt(dx*dx+dy*dy);
+            double d = Math.sqrt(dx*dx+dy*dy);
 
-            float bx, by;
+            double bx, by;
             bx = b.x + dx;
             by = b.y + ldy * dx/ldx;
 
-            bx = (float) (b.x + d*Math.cos(unit.weapon.lastAngle));
-            by = (float) (b.y + d*Math.sin(unit.weapon.lastAngle));
+            bx = (b.x + d*Math.cos(unit.weapon.lastAngle));
+            by = (b.y + d*Math.sin(unit.weapon.lastAngle));
 
             if (Constants.ON_DEBUG)
                 debug.draw(new CustomData.Line(new Vec2Float(bx, by), new Vec2Float(bx+0.1f, by+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
@@ -282,8 +225,8 @@ public class Shoot {
                 && by>=enemy.position.y
                 && by<=enemy.position.y+Constants.UNIT_H) {
 
-                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
+                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
 
                 if (prevShoot) {
                     dx = ldx;
@@ -296,7 +239,7 @@ public class Shoot {
                     action.setShoot(true);
 
             } else {
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
 
                 if (curShoot) {
                     action.setShoot(true);
@@ -318,6 +261,11 @@ public class Shoot {
             debug.draw(new CustomData.Line(new Vec2Float(unit.position.x, unit.position.y+Constants.UNIT_H2), new Vec2Float(unit.position.x+dx, unit.position.y+dy+Constants.UNIT_H2), 0.1f, new ColorFloat(128, 128, 0, 0.5f)));
 
         action.setAim(new Vec2Double(dx, dy));
+
+        if (Constants.is2x2) {
+            if (hitMy(unit, game, debug))
+                action.shoot=false;
+        }
 
         /*l = (float) Math.sqrt(dx*dx + dy*dy);
         v = new Vec2Float(0.15f * dx/l, 0.15f * dy/l);
@@ -353,18 +301,18 @@ public class Shoot {
         ldy=dy;
     }
 
-    private boolean checkShoot(float dx, float dy, UnitF enemy, Vec2Float b) {
+    private boolean checkShoot(double dx, double dy, Unit enemy, Vec2Double b) {
 
         boolean canShoot = true;
         boolean lShoot = false;
 
         int ls=150;
 
-        float l;
-        Vec2Float v;
+        double l;
+        Vec2Double v;
 
-        l = (float) Math.sqrt(dx*dx + dy*dy);
-        v = new Vec2Float(0.15f * dx/l, 0.15f * dy/l);
+        l = Math.sqrt(dx*dx + dy*dy);
+        v = new Vec2Double(0.15 * dx/l, 0.15 * dy/l);
 
         for (int i=0;i<ls;i++) {
             if (canShoot && check(b)) {
@@ -384,7 +332,7 @@ public class Shoot {
         return canShoot && lShoot;
     }
 
-    private boolean check(Vec2Float b) {
+    private boolean check(Vec2Double b) {
 
         if (World.patencyMap[(int)b.y][(int)b.x] == 0)
             return true;
@@ -397,6 +345,11 @@ public class Shoot {
             return true;
         if (World.patencyMap[(int)(b.y+0.2f)][(int)(b.x-0.2f)] == 0)
             return true;
+
+        return false;
+    }
+
+    private boolean hitMy(Unit unit, Game game, Debug debug) {
 
         return false;
     }

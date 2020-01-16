@@ -15,18 +15,18 @@ public class Game {
     private model.Player[] players;
     public model.Player[] getPlayers() { return players; }
     public void setPlayers(model.Player[] players) { this.players = players; }
-    private model.UnitF[] units;
-    public model.UnitF[] getUnits() { return units; }
-    public void setUnits(model.UnitF[] units) { this.units = units; }
-    private model.BulletF[] bullets;
-    public model.BulletF[] getBullets() { return bullets; }
-    public void setBullets(model.BulletF[] bullets) { this.bullets = bullets; }
+    private model.Unit[] units;
+    public model.Unit[] getUnits() { return units; }
+    public void setUnits(model.Unit[] units) { this.units = units; }
+    private model.Bullet[] bullets;
+    public model.Bullet[] getBullets() { return bullets; }
+    public void setBullets(model.Bullet[] bullets) { this.bullets = bullets; }
     private model.Mine[] mines;
     public model.Mine[] getMines() { return mines; }
     public void setMines(model.Mine[] mines) { this.mines = mines; }
-    private model.LootBoxF[] lootBoxes;
-    public model.LootBoxF[] getLootBoxes() { return lootBoxes; }
-    public void setLootBoxes(model.LootBoxF[] lootBoxes) { this.lootBoxes = lootBoxes; }
+    private model.LootBox[] lootBoxes;
+    public model.LootBox[] getLootBoxes() { return lootBoxes; }
+    public void setLootBoxes(model.LootBox[] lootBoxes) { this.lootBoxes = lootBoxes; }
     public Game() {}
     /*public Game(int currentTick, model.Properties properties, model.Level level, model.Player[] players, model.Unit[] units, model.Bullet[] bullets, model.Mine[] mines, model.LootBox[] lootBoxes) {
         this.currentTick = currentTick;
@@ -47,21 +47,21 @@ public class Game {
         for (int i = 0; i < result.players.length; i++) {
             result.players[i] = model.Player.readFrom(stream);
         }
-        result.units = new model.UnitF[StreamUtil.readInt(stream)];
+        result.units = new model.Unit[StreamUtil.readInt(stream)];
         for (int i = 0; i < result.units.length; i++) {
-            result.units[i] = model.UnitF.readFrom(stream);
+            result.units[i] = model.Unit.readFrom(stream);
         }
-        result.bullets = new model.BulletF[StreamUtil.readInt(stream)];
+        result.bullets = new model.Bullet[StreamUtil.readInt(stream)];
         for (int i = 0; i < result.bullets.length; i++) {
-            result.bullets[i] = model.BulletF.readFrom(stream);
+            result.bullets[i] = model.Bullet.readFrom(stream);
         }
         result.mines = new model.Mine[StreamUtil.readInt(stream)];
         for (int i = 0; i < result.mines.length; i++) {
             result.mines[i] = model.Mine.readFrom(stream);
         }
-        result.lootBoxes = new model.LootBoxF[StreamUtil.readInt(stream)];
+        result.lootBoxes = new model.LootBox[StreamUtil.readInt(stream)];
         for (int i = 0; i < result.lootBoxes.length; i++) {
-            result.lootBoxes[i] = model.LootBoxF.readFrom(stream);
+            result.lootBoxes[i] = model.LootBox.readFrom(stream);
         }
         return result;
     }
@@ -74,11 +74,11 @@ public class Game {
             playersElement.writeTo(stream);
         }
         StreamUtil.writeInt(stream, units.length);
-        for (model.UnitF unitsElement : units) {
+        for (model.Unit unitsElement : units) {
             unitsElement.writeTo(stream);
         }
         StreamUtil.writeInt(stream, bullets.length);
-        for (model.BulletF bulletsElement : bullets) {
+        for (model.Bullet bulletsElement : bullets) {
             bulletsElement.writeTo(stream);
         }
         StreamUtil.writeInt(stream, mines.length);
@@ -86,7 +86,7 @@ public class Game {
             minesElement.writeTo(stream);
         }
         StreamUtil.writeInt(stream, lootBoxes.length);
-        for (model.LootBoxF lootBoxesElement : lootBoxes) {
+        for (model.LootBox lootBoxesElement : lootBoxes) {
             lootBoxesElement.writeTo(stream);
         }
     }

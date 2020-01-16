@@ -1,7 +1,7 @@
 package myModel;
 
 import model.*;
-import sims.Sim_v2;
+import sims.Sim_v3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,17 +11,17 @@ import java.util.HashMap;
  */
 public class Dodge {
 
-    public static ArrayList<Vec2Float> bullets;
+    public static ArrayList<Vec2Double> bullets;
 
-    public static void setBullets(UnitF unit, Game game, Debug debug) {
+    public static void setBullets(Unit unit, Game game, Debug debug) {
 
         bullets = new ArrayList<>();
 
-        for (BulletF b:game.getBullets()) {
+        for (Bullet b:game.getBullets()) {
 
             //System.out.println("b x=" + b.position.x + " y=" + b.position.y + " vx=" + b.velocity.x + " vy=" + b.velocity.y);
 
-            Vec2Float bpf = new Vec2Float(b.velocity.x/game.getProperties().getTicksPerSecond(), b.velocity.y/game.getProperties().getTicksPerSecond());
+            Vec2Double bpf = new Vec2Double(b.velocity.x/game.getProperties().getTicksPerSecond(), b.velocity.y/game.getProperties().getTicksPerSecond());
 
             //System.out.println("bpf " + bpf.x + " " + bpf.y);
 
@@ -31,7 +31,7 @@ public class Dodge {
 
     }
 
-    public static void dodge(UnitF unit, Game game, Debug debug, UnitAction action) {
+    public static void dodge(Unit unit, Game game, Debug debug, UnitAction action) {
 
         //dodge_v1(unit, game, debug, action);
         //dodge_v2(unit, game, debug, action);
@@ -39,7 +39,7 @@ public class Dodge {
 
     }
 
-    private static int checkHit(float bx, float by, float ux, float uy, float size) {
+    private static int checkHit(double bx, double by, double ux, double uy, double size) {
 
         if (bx+size > ux-Constants.UNIT_W2 &&
                 bx-size < ux+Constants.UNIT_W2 &&
@@ -52,8 +52,8 @@ public class Dodge {
 
     //возможно надо перейти на проверку линии пули с юнитом
     //a c b d
-    private static int checkHitFlow(float bx1, float by1, float ux1, float uy1,
-                                    float bx2, float by2, float ux2, float uy2) {
+    private static int checkHitFlow(double bx1, double by1, double ux1, double uy1,
+                                    double bx2, double by2, double ux2, double uy2) {
 
         //проверка линии пули с первым положением
         //4 линии
@@ -101,8 +101,8 @@ public class Dodge {
         return 0;
     }
 
-    private static boolean intersect(float ax1, float ax2, float ay1, float ay2,
-                                     float bx1, float by1, float bx2, float by2) {
+    private static boolean intersect(double ax1, double ax2, double ay1, double ay2,
+                                     double bx1, double by1, double bx2, double by2) {
 
         double v1,v2,v3,v4;
 
@@ -116,14 +116,14 @@ public class Dodge {
 
     //todo хранить все координаты приблизительно в инт до 5 знака и считать пули один раз их скорости
 
-    public static void dodge_v3(UnitF unit, Game game, Debug debug, UnitAction action) {
+    public static void dodge_v3(Unit unit, Game game, Debug debug, UnitAction action) {
 
-        int[] hits = new int[Sim_v2.steps.length];
+        int[] hits = new int[Sim_v3.steps.length];
 
         //float tick_f;
         int hit;
-        Vec2Float bullet = new Vec2Float();
-        Vec2Float u = new Vec2Float();
+        Vec2Double bullet = new Vec2Double();
+        Vec2Double u = new Vec2Double();
 
         //todo возможно проверять расстояние до центра юнита и если менее чего-то то уже точнее
 
@@ -165,7 +165,7 @@ public class Dodge {
                 u.x = unit.position.x;
                 u.y = unit.position.y;
 
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
 
                     hit = checkHit(bullet.x,
                             bullet.y,
@@ -206,11 +206,15 @@ public class Dodge {
                     bullet.y+=bullets.get(b).y;
 
                     if (Constants.ON_DEBUG)
-                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.1f, bullet.y - 0.1f), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,0,1,0.25f)));
+                        debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(0,0,1,0.5f)));
 
                     //проверить что пуля в стене
                     //todo может на тик раньше быть в стене и взрыв
-                    if (World.map[(int)bullet.y][(int)bullet.x] == 1) {
+                    //if (World.map[(int)bullet.y][(int)bullet.x] == 1) {
+                    if (World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
+                            || World.map[(int)(bullet.y-game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1
+                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x-game.getBullets()[b].size/2f)] == 1
+                            || World.map[(int)(bullet.y+game.getBullets()[b].size/2f)][(int)(bullet.x+game.getBullets()[b].size/2f)] == 1) {
                         //todo если взрывная, то урон
                         if (game.getBullets()[b].explosionParams != null) {
 
@@ -226,6 +230,10 @@ public class Dodge {
                                 debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-0.05f, bullet.y - 0.05f), new Vec2Float(0.1f, 0.1f), new ColorFloat(0,0,1,0.25f)));
                             }
                         }
+
+                        if (Constants.ON_DEBUG)
+                            debug.draw(new CustomData.Rect(new Vec2Float(bullet.x-game.getBullets()[b].size/2f, bullet.y - game.getBullets()[b].size/2f), new Vec2Float(game.getBullets()[b].size, game.getBullets()[b].size), new ColorFloat(1,0,0,0.5f)));
+
                         break;
                     }
 
@@ -243,18 +251,18 @@ public class Dodge {
         }
 
         int minHits=1000;
-        Vec2Float p = null;
+        Vec2Double p = null;
         int minI = -1;
 
         for (int i=0;i<hits.length;i++) {
 
             if (p==null) {
-                p=Sim_v2.steps[i][0];
+                p=Sim_v3.steps[i][0];
                 minHits=hits[i];
                 minI=i;
             } else {
                 if (minHits>hits[i]) {
-                    p=Sim_v2.steps[i][0];
+                    p=Sim_v3.steps[i][0];
                     minHits=hits[i];
                     minI=i;
                 }

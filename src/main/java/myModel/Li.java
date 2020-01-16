@@ -1,10 +1,6 @@
 package myModel;
 
-import model.Vec2Float;
-
 import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.LinkedList;
 
 /**
  * Created by aka_npou on 22.07.2019.

@@ -10,9 +10,10 @@ import sims.*;
 
 //уклонения
 public class Strategy_v2 extends AkaNpouStrategy {
+    long s,f;
 
     @Override
-    public UnitAction getAction(UnitF unit, Game game, Debug debug) {
+    public UnitAction getAction(Unit unit, Game game, Debug debug) {
 
         if (game.getCurrentTick() == 0) {
             world.setMap(game.getLevel());
@@ -22,15 +23,33 @@ public class Strategy_v2 extends AkaNpouStrategy {
             world.print(World.patencyMap, debug);
             World.liMap = new int[World.y][World.x];
             Li.setVectors();
+
+            if (game.getUnits().length>=4)
+                Constants.is2x2=true;
         }
 
         if (game.getCurrentTick()>currentTick) {
             Dodge.setBullets(unit, game, debug);
+            /*s = System.nanoTime();
             world.setLiMap(unit);
-            world.print(World.liMap, debug);
+            f = System.nanoTime();
+            System.out.println("li "+(f-s));*/
+
+            //world.print(World.liMap, debug);
+
+            for (Unit u:game.getUnits()) {
+                u.jumpState.speed /= Constants.TICKS_PER_SECOND;
+            }
 
             currentTick=game.getCurrentTick();
         }
+
+        s = System.nanoTime();
+        world.setLiMap(unit);
+        f = System.nanoTime();
+        System.out.println("li "+(f-s));
+        world.print(World.liMap, debug);
+
 
         getNearestEnemy(unit, game, debug);
 
@@ -58,10 +77,16 @@ public class Strategy_v2 extends AkaNpouStrategy {
         UnitAction action = new UnitAction();
         action.aim = Vec2Double.ZERO;
 
-        Sim_v2.sim(unit, game, debug, action);
+        s = System.nanoTime();
+        Sim_v3.sim(unit, game, debug, action);
+        f = System.nanoTime();
+        System.out.println("sim " + (f-s));
 
         if (unitStatus == UnitStatus.Dodge) {
+            s = System.nanoTime();
             dodge(unit, game, debug, action);
+            f = System.nanoTime();
+            System.out.println("dodge " + (f-s));
         }
 
         if (unitStatus == UnitStatus.GoToWeapon) {
@@ -90,13 +115,16 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }*/
 
         //shoot.drawShoot(enemy, unit, debug);
-        shoot.canShoot(unit, nearestEnemy, debug, action);
+        s = System.nanoTime();
+        shoot.canShoot(unit, nearestEnemy, debug, action, game);
+        f = System.nanoTime();
+        System.out.println("shoot " + (f-s));
 
 
         return action;
     }
 
-    private void goToWeapon(UnitF unit, Game game, Debug debug, UnitAction action) {
+    private void goToWeapon(Unit unit, Game game, Debug debug, UnitAction action) {
         /*LootBox nearestWeapon = null;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 1) {
@@ -107,8 +135,8 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
         }*/
 
-        LootBoxF nearestWeapon = null;
-        for (LootBoxF lootBox : game.getLootBoxes()) {
+        LootBox nearestWeapon = null;
+        for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 1) {
                 Item.Weapon w = (Item.Weapon)lootBox.item;
                 if (w.getWeaponType() !=WeaponType.ROCKET_LAUNCHER) {
@@ -124,20 +152,20 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         //action.setVelocity((nearestWeapon.position.x - unit.position.x)*100f);
 
-        float minL = 50*50;
+        double minL = 50*50;
         //float cellLootBox=World.liMap[(int)nearestWeapon.position.y][(int)nearestWeapon.position.x];
-        Vec2Float minP = null;
-        for (int i=0;i<Sim_v2.steps.length;i++) {
+        Vec2Double minP = null;
+        for (int i=0;i<Sim_v3.steps.length;i++) {
             if (minP==null) {
-                minP = Sim_v2.steps[i][0];
-                for (Vec2Float p:Sim_v2.steps[i])
+                minP = Sim_v3.steps[i][0];
+                for (Vec2Double p:Sim_v3.steps[i])
                     minL = distanceSqr(p, nearestWeapon.position);
                     //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
 
             } else {
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
                     if (minL > distanceSqr(p, nearestWeapon.position)) {
-                        minP = Sim_v2.steps[i][0];
+                        minP = Sim_v3.steps[i][0];
                         minL = distanceSqr(p, nearestWeapon.position);
                         //minL = Math.abs(World.liMap[(int)p.y][(int)p.x]-cellLootBox);
                     }
@@ -146,10 +174,10 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        if (minP.y>unit.position.y)
+        if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jump=true;
 
-        if (minP.y<unit.position.y)
+        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
 
         action.swapWeapon=true;
@@ -160,9 +188,9 @@ public class Strategy_v2 extends AkaNpouStrategy {
         //jump(unit, game, debug, action, nearestWeapon.position);
     }
 
-    private void goToHP(UnitF unit, Game game, Debug debug, UnitAction action) {
-        LootBoxF nearestHP = null;
-        for (LootBoxF lootBox : game.getLootBoxes()) {
+    private void goToHP(Unit unit, Game game, Debug debug, UnitAction action) {
+        LootBox nearestHP = null;
+        for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 0) {
                 /*if (nearestHP == null || distanceSqr(unit.getPosition(),
                         lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestHP.getPosition())) {
@@ -175,18 +203,18 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
         //todo поменять на поиск по ЛИ
         double minL = 50*50;
-        Vec2Float minP = null;
-        for (int i=0;i<Sim_v2.steps.length;i++) {
+        Vec2Double minP = null;
+        for (int i=0;i<Sim_v3.steps.length;i++) {
             if (minP==null) {
-                minP = Sim_v2.steps[i][0];
-                for (Vec2Float p:Sim_v2.steps[i])
+                minP = Sim_v3.steps[i][0];
+                for (Vec2Double p:Sim_v3.steps[i])
                     minL = distanceSqr(p, nearestHP.position);
                     //minL = World.liMap[(int)p.y][(int)p.x];
 
             } else {
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
                     if (minL > distanceSqr(p, nearestHP.position)) {
-                        minP = Sim_v2.steps[i][0];
+                        minP = Sim_v3.steps[i][0];
                         minL = distanceSqr(p, nearestHP.position);
                         //minL = World.liMap[(int)p.y][(int)p.x];
                     }
@@ -195,15 +223,15 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        if (minP.y>unit.position.y)
+        if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jump=true;
 
-        if (minP.y<unit.position.y)
+        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
 
     }
 
-    private void goToEnemy(UnitF unit, Game game, Debug debug, UnitAction action) {
+    private void goToEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
         //UnitF nearestEnemy = null;
 
 //        for (UnitF other : game.getUnits()) {
@@ -218,14 +246,14 @@ public class Strategy_v2 extends AkaNpouStrategy {
 //        }
 
         double minL = 50*50;
-        Vec2Float minP = null;
+        Vec2Double minP = null;
         int minI=-1;
         int minTick=-1;
-        for (int i=0;i<Sim_v2.steps.length;i++) {
+        for (int i=0;i<Sim_v3.steps.length;i++) {
             if (minP==null) {
-                minP = Sim_v2.steps[i][0];
+                minP = Sim_v3.steps[i][0];
                 int tick = 1;
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
                     if (minL > distanceSqr(p.x, p.y, nearestEnemy.position.x, nearestEnemy.position.y)) {
                         minL = distanceSqr(p, nearestEnemy.position);
                         minI=i;
@@ -236,9 +264,9 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
             } else {
                 int tick = 1;
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
                     if (minL > distanceSqr(p, nearestEnemy.position)) {
-                        minP = Sim_v2.steps[i][0];
+                        minP = Sim_v3.steps[i][0];
                         minL = distanceSqr(p, nearestEnemy.position);
                         minI=i;
                         minTick=tick;
@@ -249,18 +277,18 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         if (Constants.ON_DEBUG)
-            debug.draw(new CustomData.Rect(new Vec2Float(Sim_v2.steps[minI][minTick-1].x-0.2f,Sim_v2.steps[minI][minTick-1].y-0.2f), new Vec2Float(0.4f,0.4f), new ColorFloat(0.5f,0.5f, 0.5f, 0.5f)));
+            debug.draw(new CustomData.Rect(new Vec2Float(Sim_v3.steps[minI][minTick-1].x-0.2f,Sim_v3.steps[minI][minTick-1].y-0.2f), new Vec2Float(0.4f,0.4f), new ColorFloat(0.5f,0.5f, 0.5f, 0.5f)));
 
         action.setVelocity((minP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        if (minP.y>unit.position.y)
+        if (minP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jump=true;
 
-        if (minP.y<unit.position.y)
+        if (minP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
 
     }
 
-    private void goFromEnemy(UnitF unit, Game game, Debug debug, UnitAction action) {
+    private void goFromEnemy(Unit unit, Game game, Debug debug, UnitAction action) {
         //UnitF nearestEnemy = null;
 
 //        for (UnitF other : game.getUnits()) {
@@ -275,17 +303,17 @@ public class Strategy_v2 extends AkaNpouStrategy {
 //        }
 
         double maxL = -1;
-        Vec2Float maxP = null;
-        for (int i=0;i<Sim_v2.steps.length;i++) {
+        Vec2Double maxP = null;
+        for (int i=0;i<Sim_v3.steps.length;i++) {
             if (maxP==null) {
-                maxP = Sim_v2.steps[i][0];
-                for (Vec2Float p:Sim_v2.steps[i])
+                maxP = Sim_v3.steps[i][0];
+                for (Vec2Double p:Sim_v3.steps[i])
                     maxL = distanceSqr(p, nearestEnemy.position);
 
             } else {
-                for (Vec2Float p:Sim_v2.steps[i]) {
+                for (Vec2Double p:Sim_v3.steps[i]) {
                     if (maxL < distanceSqr(p, nearestEnemy.position)) {
-                        maxP = Sim_v2.steps[i][0];
+                        maxP = Sim_v3.steps[i][0];
                         maxL = distanceSqr(p, nearestEnemy.position);
                     }
                 }
@@ -293,10 +321,10 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
 
         action.setVelocity((maxP.x - unit.position.x)*Constants.TICKS_PER_SECOND);
-        if (maxP.y>unit.position.y)
+        if (maxP.y-unit.position.y>Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jump=true;
 
-        if (maxP.y<unit.position.y)
+        if (maxP.y-unit.position.y<-Constants.UNIT_Y_SPEED_PER_TICK/2d)
             action.jumpDown=true;
     }
 
@@ -319,7 +347,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
     }
 
     private boolean mapHaveHP(Game game) {
-        for (LootBoxF lootBox : game.getLootBoxes()) {
+        for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem().TAG == 0) {
                 return true;
             }
@@ -328,7 +356,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
         return false;
     }
 
-    private boolean needDodge(UnitF unit, Game game, Debug debug) {
+    private boolean needDodge(Unit unit, Game game, Debug debug) {
 
         //if (1==1)
         //    return true;
@@ -361,11 +389,11 @@ public class Strategy_v2 extends AkaNpouStrategy {
         return false;
     }
 
-    private void dodge(UnitF unit, Game game, Debug debug, UnitAction action) {
+    private void dodge(Unit unit, Game game, Debug debug, UnitAction action) {
         Dodge.dodge(unit, game, debug, action);
     }
 
-    private boolean enemyNearly(UnitF unit, Game game, Debug debug) {
+    private boolean enemyNearly(Unit unit, Game game, Debug debug) {
         //nearestEnemy = null;
 
 //        for (UnitF other : game.getUnits()) {
@@ -386,7 +414,7 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     }
 
-    private boolean enemyFar(UnitF unit, Game game, Debug debug) {
+    private boolean enemyFar(Unit unit, Game game, Debug debug) {
 //        UnitF nearestEnemy = null;
 //
 //        for (UnitF other : game.getUnits()) {
@@ -406,10 +434,10 @@ public class Strategy_v2 extends AkaNpouStrategy {
             return false;
     }
 
-    private void getNearestEnemy(UnitF unit, Game game, Debug debug) {
+    private void getNearestEnemy(Unit unit, Game game, Debug debug) {
         nearestEnemy = null;
 
-        for (UnitF other : game.getUnits()) {
+        for (Unit other : game.getUnits()) {
             if (other.getPlayerId() != unit.getPlayerId()) {
                 /*if (nearestEnemy == null || distanceSqr(unit.getPosition(),
                         other.getPosition()) < distanceSqr(unit.getPosition(), nearestEnemy.getPosition())) {
@@ -421,14 +449,14 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
     }
 
-    private void drawSomething(UnitF unit, Game game, Debug debug) {
+    private void drawSomething(Unit unit, Game game, Debug debug) {
         if (Constants.ON_DEBUG) {
             System.out.println("tick " + game.getCurrentTick());
             System.out.println(unit);
         }
 
         if (Constants.ON_DEBUG) {
-            for (BulletF b : game.getBullets()) {
+            for (Bullet b : game.getBullets()) {
                 debug.draw(new CustomData.Line(new Vec2Float( b.position.x,  b.position.y),
                         new Vec2Float( b.position.x +  b.velocity.x,  b.position.y +  b.velocity.y),
                         0.1f, new ColorFloat(0, 128, 0, 255)));
@@ -444,10 +472,10 @@ public class Strategy_v2 extends AkaNpouStrategy {
             }
 
 
-            Vec2Float p = new Vec2Float(unit.position.x, unit.position.y);
+            Vec2Double p = new Vec2Double(unit.position.x, unit.position.y);
             p.setX(34.5f);
             p.setY(1f);
-            float v = Constants.UNIT_X_SPEED_PER_TICK*6;//(game.getProperties().getUnitMaxHorizontalSpeed()/game.getProperties().getTicksPerSecond() * 6f);
+            double v = Constants.UNIT_X_SPEED_PER_TICK*6;//(game.getProperties().getUnitMaxHorizontalSpeed()/game.getProperties().getTicksPerSecond() * 6f);
             for (int i=0;i<10; i++) {
                 debug.draw(new CustomData.Line( new Vec2Float(p.x,p.getY() + (i%2==0?0.2f:-0.2f)),
                         new Vec2Float(p.x - v,p.getY() + (i%2==0?-0.2f:0.2f)), 0.1f, new ColorFloat(255,0,255,1f)));
@@ -461,19 +489,19 @@ public class Strategy_v2 extends AkaNpouStrategy {
         }
     }
 
-    /*static double distanceSqr(Vec2Double a, Vec2Double b) {
-        return (a.x - b.x) * (a.x - b.x) + (a.getY() - b.getY()) * (a.getY() - b.getY());
-    }*/
-
-    static float distanceSqr(Vec2Float a, Vec2Float b) {
+    static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
     }
 
-    /*static double distanceSqr(double ax, double ay, double bx, double by) {
-        return (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
+    /*static float distanceSqr(Vec2Float a, Vec2Float b) {
+        return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
     }*/
 
-    static float distanceSqr(float ax, float ay, float bx, float by) {
+    static double distanceSqr(double ax, double ay, double bx, double by) {
         return (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
     }
+
+    /*static float distanceSqr(float ax, float ay, float bx, float by) {
+        return (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
+    }*/
 }

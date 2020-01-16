@@ -22,7 +22,7 @@ public abstract class AkaNpouStrategy {
 
     UnitStatus unitStatus = UnitStatus.Wait;
 
-    UnitF nearestEnemy = null;
+    Unit nearestEnemy = null;
 
-    public abstract UnitAction getAction(UnitF unit, Game game, Debug debug);
+    public abstract UnitAction getAction(Unit unit, Game game, Debug debug);
 }
