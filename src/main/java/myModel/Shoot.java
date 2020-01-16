@@ -225,8 +225,8 @@ public class Shoot {
                 && by>=enemy.position.y
                 && by<=enemy.position.y+Constants.UNIT_H) {
 
-                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
+                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit);
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit);
 
                 if (prevShoot) {
                     dx = ldx;
@@ -239,7 +239,7 @@ public class Shoot {
                     action.setShoot(true);
 
             } else {
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Double(unit.position.x, unit.position.y+Constants.UNIT_H2), game, unit);
 
                 if (curShoot) {
                     action.setShoot(true);
@@ -262,10 +262,10 @@ public class Shoot {
 
         action.setAim(new Vec2Double(dx, dy));
 
-        if (Constants.is2x2) {
+        /*if (Constants.is2x2) {
             if (hitMy(unit, game, debug))
                 action.shoot=false;
-        }
+        }*/
 
         /*l = (float) Math.sqrt(dx*dx + dy*dy);
         v = new Vec2Float(0.15f * dx/l, 0.15f * dy/l);
@@ -301,7 +301,7 @@ public class Shoot {
         ldy=dy;
     }
 
-    private boolean checkShoot(double dx, double dy, Unit enemy, Vec2Double b) {
+    private boolean checkShoot(double dx, double dy, Unit enemy, Vec2Double b, Game game, Unit unit) {
 
         boolean canShoot = true;
         boolean lShoot = false;
@@ -320,7 +320,24 @@ public class Shoot {
                 break;
             }
 
-            if (b.x>enemy.position.x-0.5f && b.x<enemy.position.x+0.5f && b.y>enemy.position.y && b.y<enemy.position.y+1.8f) {
+            //можно попасть в своего или второго чужого
+            if (Constants.is2x2) {
+                for (Unit u:game.getUnits()) {
+                    if (unit.id == u.id)
+                        continue;
+
+                    if (b.x>u.position.x-Constants.UNIT_W2 && b.x<u.position.x+Constants.UNIT_W2 && b.y>u.position.y && b.y<u.position.y+Constants.UNIT_H) {
+                        if (unit.playerId==u.playerId)
+                            return false;
+                        else
+                            lShoot=true;
+
+                        break;
+                    }
+                }
+            }
+
+            if (b.x>enemy.position.x-Constants.UNIT_W2 && b.x<enemy.position.x+Constants.UNIT_W2 && b.y>enemy.position.y && b.y<enemy.position.y+Constants.UNIT_H) {
                 lShoot = true;
                 break;
             }

@@ -55,25 +55,26 @@ public class Dodge {
     private static int checkHitFlow(double bx1, double by1, double ux1, double uy1,
                                     double bx2, double by2, double ux2, double uy2) {
 
+        double border=0.1;
         //проверка линии пули с первым положением
         //4 линии
 
         //верх
         if (intersect(bx1,bx2, by1,by2,
-                        ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H, ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H))
+                        ux1-Constants.UNIT_W2-border, uy1+Constants.UNIT_H+border, ux1+Constants.UNIT_W2+border, uy1+Constants.UNIT_H+border))
             return 1;
 
         //низ
         if (intersect(bx1,bx2, by1,by2,
-                ux1-Constants.UNIT_W2, uy1, ux1+Constants.UNIT_W2, uy1))
+                ux1-Constants.UNIT_W2-border, uy1-border, ux1+Constants.UNIT_W2+border, uy1-border))
             return 1;
         //право
         if (intersect(bx1,bx2, by1,by2,
-                ux1+Constants.UNIT_W2, uy1, ux1+Constants.UNIT_W2, uy1+Constants.UNIT_H))
+                ux1+Constants.UNIT_W2+border, uy1-border, ux1+Constants.UNIT_W2+border, uy1+Constants.UNIT_H+border))
             return 1;
         //лево
         if (intersect(bx1,bx2, by1,by2,
-                ux1-Constants.UNIT_W2, uy1, ux1-Constants.UNIT_W2, uy1+Constants.UNIT_H))
+                ux1-Constants.UNIT_W2-border, uy1-border, ux1-Constants.UNIT_W2-border, uy1+Constants.UNIT_H+border))
             return 1;
 
 
@@ -82,20 +83,20 @@ public class Dodge {
 
         //верх
         if (intersect(bx1,bx2, by1,by2,
-                ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H))
+                ux2-Constants.UNIT_W2-border, uy2+Constants.UNIT_H+border, ux2+Constants.UNIT_W2+border, uy2+Constants.UNIT_H+border))
             return 1;
 
         //низ
         if (intersect(bx1,bx2, by1,by2,
-                ux2-Constants.UNIT_W2, uy2, ux2+Constants.UNIT_W2, uy2))
+                ux2-Constants.UNIT_W2-border, uy2-border, ux2+Constants.UNIT_W2+border, uy2-border))
             return 1;
         //право
         if (intersect(bx1,bx2, by1,by2,
-                ux2+Constants.UNIT_W2, uy2, ux2+Constants.UNIT_W2, uy2+Constants.UNIT_H))
+                ux2+Constants.UNIT_W2+border, uy2-border, ux2+Constants.UNIT_W2+border, uy2+Constants.UNIT_H+border))
             return 1;
         //лево
         if (intersect(bx1,bx2, by1,by2,
-                ux2-Constants.UNIT_W2, uy2, ux2-Constants.UNIT_W2, uy2+Constants.UNIT_H))
+                ux2-Constants.UNIT_W2-border, uy2-border, ux2-Constants.UNIT_W2-border, uy2+Constants.UNIT_H+border))
             return 1;
 
         return 0;

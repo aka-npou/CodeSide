@@ -1,6 +1,5 @@
 import model.*;
-import myModel.Constants;
-import strategy.AkaNpouStrategy;
+import myModel.*;
 import strategy.*;
 
 

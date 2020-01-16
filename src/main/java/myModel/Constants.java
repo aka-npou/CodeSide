@@ -1,5 +1,7 @@
 package myModel;
 
+import model.ColorFloat;
+
 /**
  * Created by aka_npou on 30.11.2019.
  */
@@ -25,6 +27,17 @@ public class Constants {
     public static final double TICK = 1d/60d;
 
     public static final double FIRST_FALL_TICK_SPEED_Y = 0.05d;
+
+    public static final ColorFloat[] uc = new ColorFloat[6];
+
+    static {
+        uc[0] = new ColorFloat(1, 0.5f, 0, 0.2f);
+        uc[1] = new ColorFloat(0, 0, 1, 0.2f);
+        uc[2] = new ColorFloat(0, 1, 1, 0.2f);
+        uc[3] = new ColorFloat(0, 1, 0, 0.2f);
+        uc[4] = new ColorFloat(0.56f, 0, 1, 0.2f);
+        uc[5] = new ColorFloat(1, 0, 1, 0.2f);
+    }
 
     public static boolean is2x2=false;
 
