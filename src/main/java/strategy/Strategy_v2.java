@@ -187,6 +187,9 @@ public class Strategy_v2 extends AkaNpouStrategy {
 
     private boolean canMine(Unit unit, Game game, Debug debug) {
 
+        if (true)
+            return false;
+
         if (unit.onGround) {
             if (unit.mines!=0) {
 
