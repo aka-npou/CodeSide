@@ -9,7 +9,7 @@ import myModel.*;
 public class Sim_v3 {
 
     public static int ticks = 120;
-    public static Vec2Double[][] steps = new Vec2Double[18][ticks];
+    public static Vec2Double[][] steps = new Vec2Double[9+9][ticks];
 
     public static void  sim(Unit unit, Game game, Debug debug, UnitAction action) {
 
@@ -27,28 +27,6 @@ public class Sim_v3 {
         chain(7, unit, unit.jumpState, unit.position, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -1,0, true);
         chain(8, unit, unit.jumpState, unit.position, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -1,0, true);
 
-
-        //попробуем через 36 тиков менять направления
-        /*for (int i=0;i<36;i++) {
-            steps[9][i]=steps[5][i];
-        }
-        chain(9, unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, -1,36);
-
-        for (int i=0;i<36;i++) {
-            steps[10][i]=steps[6][i];
-        }
-        chain(10, unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, -1,36);
-
-
-        for (int i=0;i<36;i++) {
-            steps[11][i]=steps[7][i];
-        }
-        chain(11, unit, game, debug, action, Constants.UNIT_X_SPEED_PER_TICK, 1,36);
-
-        for (int i=0;i<36;i++) {
-            steps[12][i]=steps[8][i];
-        }
-        chain(12, unit, game, debug, action, -Constants.UNIT_X_SPEED_PER_TICK, 1,36);*/
     }
 
     private static void chain(int chain, Unit unit, JumpState unitJumpState, Vec2Double unitPos, Game game, Debug debug, UnitAction action, double vx, double vy, int from, boolean branch) {
@@ -63,7 +41,7 @@ public class Sim_v3 {
         //jumpState.speed /= Constants.TICKS_PER_SECOND;
 
         if (jumpState.maxTime==0 && p.y-(int)p.y<Constants.UNIT_Y_SPEED_PER_TICK && vy>=0) {
-            //todo если внизу не пусто будет менее чем через тик то считаем что встали. и хотим не вниз
+            //если внизу не пусто будет менее чем через тик то считаем что встали. и хотим не вниз
 
             if((World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x - Constants.UNIT_W2)] == 2 ||
                     World.map[(int)(p.y-Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x + Constants.UNIT_W2)] == 2)
@@ -88,10 +66,25 @@ public class Sim_v3 {
 
             step(p, vx, vy, jumpState, unit, game, debug);
 
+            //ошибки какие то, может провалиться
+            if (p.y<1 || p.x<1 || p.y>World.y-1 || p.x>World.x-1) {
+                for (int t=tick;t<ticks;t++) {
+                    steps[chain][t] = new Vec2Double(0, 0);
+                }
+                return;
+            }
             steps[chain][tick] = new Vec2Double(p.x, p.y);
 
             if (Constants.ON_DEBUG)
-                debug.draw(new CustomData.Rect(new Vec2Float(p.x+unit.id/10f, p.y+unit.id/10f), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
+                if (tick%2==0)
+                    debug.draw(new CustomData.Rect(new Vec2Float(p.x+unit.id/10f, p.y+unit.id/10f), new Vec2Float(0.1f, 0.1f), Constants.uc[unit.id-1]));//new ColorFloat(0,1,0,0.2f)));
+
+            /*if (tick == 1 && branch) {
+                for (int i=0;i<2;i++) {
+                    steps[chain+9][i]=steps[chain][i];
+                }
+                chain(chain+9, unit, jumpState, p, game, debug, action, vx, vy==1?-1:1,2, false);
+            }*/
 
             if (tick == 5 && branch) {
                 for (int i=0;i<6;i++) {
@@ -110,7 +103,6 @@ public class Sim_v3 {
 
         dx=vx;
 
-        //todo проверка на юнита
         if (dx>0) {
             if (World.map[(int)(p.y)][(int)(p.x+vx + Constants.UNIT_W2)] == 1 ||
                     World.map[(int)(p.y + Constants.UNIT_H2)][(int)(p.x+vx + Constants.UNIT_W2)] == 1 ||
@@ -272,7 +264,7 @@ public class Sim_v3 {
                 p.y+=Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
             } else {
                 p.y += dy;
-                check(p, -1, jumpState, unit, game, debug, canSpeed, true);
+                check(p, -1, (int)vy, jumpState, unit, game, debug, canSpeed, true);
                 if (!canSpeed.can) {
                     //считаем что приземлились
                     p.y -= dy;
@@ -286,19 +278,35 @@ public class Sim_v3 {
                 if (canSpeed.toSpeed != 0) {
                     p.y -= dy;
 
-                    if (canSpeed.toSpeed>0 && canUp || canSpeed.toSpeed<0 && canDown)
+                    if (canSpeed.toSpeed>0 && canUp || canSpeed.toSpeed<0 && canDown) {
                         p.y += canSpeed.toSpeed;
-                    else
+                        if (canSpeed.toSpeed<0) {
+                            jumpState.maxTime=0;
+                            jumpState.speed = 0;
+                            jumpState.canJump = false;
+                            jumpState.canCancel = false;
+                        }
+                    } else
                         canSpeed.toSpeed=0;
+
+                    /*if (p.y - (int) p.y < Constants.UNIT_Y_SPEED_PER_TICK) {
+                        p.y = (int) p.y;
+
+                        jumpState.maxTime = Constants.JUMP_TIME;
+                        jumpState.canJump = true;
+                        jumpState.canCancel = true;
+                        jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                    }
 
                     if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
                         jumpState.canJump = true;
                         jumpState.maxTime = Constants.JUMP_TIME_PAD;
                         jumpState.canCancel = false;
                         jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
-                    }
+                    }*/
                 } else {
-                    if (vy < 0) {
+                    //dy=canSpeed.toSpeed;
+                    /*if (vy < 0) {
                         //ничего, летим вниз дальше
                     }
 
@@ -320,7 +328,7 @@ public class Sim_v3 {
                         jumpState.canJump = true;
                         jumpState.canCancel = true;
                         jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
-                    }
+                    }*/
                 }
             }
         }
@@ -335,7 +343,7 @@ public class Sim_v3 {
             } else {
                 p.y += dy;
                 p.y += Constants.UNIT_H;
-                check(p, 1, jumpState, unit, game, debug, canSpeed, false);
+                check(p, 1, (int)vy, jumpState, unit, game, debug, canSpeed, false);
                 p.y -= Constants.UNIT_H;
                 if (!canSpeed.can) {
                     p.y -= dy;
@@ -353,12 +361,12 @@ public class Sim_v3 {
                     else
                         canSpeed.toSpeed=0;
 
-                    if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
+                    /*if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
                         jumpState.canJump = true;
                         jumpState.maxTime = Constants.JUMP_TIME_PAD;
                         jumpState.canCancel = false;
                         jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
-                    }
+                    }*/
                 } else {
                     if (!canUp)
                         p.y -= dy;
@@ -387,7 +395,7 @@ public class Sim_v3 {
                 p.y+=Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
             } else {
                 p.y -= Constants.UNIT_Y_SPEED_PER_TICK;
-                check(p, 0, jumpState, unit, game, debug, canSpeed, true);
+                check(p, 0, (int)vy, jumpState, unit, game, debug, canSpeed, true);
                 if (!canSpeed.can)
                     p.y += Constants.UNIT_Y_SPEED_PER_TICK;
                 if (canSpeed.toSpeed != 0) {
@@ -397,7 +405,7 @@ public class Sim_v3 {
                     else
                         canSpeed.toSpeed=0;
 
-                    if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
+                    /*if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
                         jumpState.canJump = true;
                         jumpState.maxTime = Constants.JUMP_TIME_PAD;
                         jumpState.canCancel = false;
@@ -409,12 +417,12 @@ public class Sim_v3 {
                         jumpState.maxTime = 0;
                         jumpState.canCancel = false;
                         jumpState.speed = 0;
-                    }
+                    }*/
                 } else {
                     //ничего
-                    if (vy == 0 && canSpeed.can) {
+                    /*if (vy == 0 && canSpeed.can) {
                         p.y += Constants.UNIT_Y_SPEED_PER_TICK;
-                    }
+                    }*/
                 }
             }
         }
@@ -422,6 +430,8 @@ public class Sim_v3 {
         if (canSpeed.can && canSpeed.toSpeed!=0)
             dy=canSpeed.toSpeed;
 
+        if (dy<0)
+            dy=canSpeed.toSpeed;
         /*if (canSpeed.toSpeed == Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD) {
             jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
             jumpState.canJump = true;
@@ -446,10 +456,10 @@ public class Sim_v3 {
 
     }
 
-    private static void check(Vec2Double p, int vy, JumpState jumpState, Unit unit, Game game, Debug debug, CanSpeed canSpeed, boolean bottom) {
+    private static void check(Vec2Double p, int vy, int qy, JumpState jumpState, Unit unit, Game game, Debug debug, CanSpeed canSpeed, boolean bottom) {
 
-        if (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==0) {
-            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0) {
+        if (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==0 || (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==2 && World.map[(int)(p.y+Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x-Constants.UNIT_W2)]==2)) {
+            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0 || (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==2 && World.map[(int)(p.y+Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)]==2)) {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= vy==-1?-Constants.UNIT_Y_SPEED_PER_TICK:0;
@@ -468,8 +478,17 @@ public class Sim_v3 {
 
             if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==2) {
 
-                canSpeed.can= true;
-                canSpeed.toSpeed= 0;
+                canSpeed.can = true;
+                canSpeed.toSpeed = 0;
+
+                if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                }
 
                 return;
             }
@@ -478,9 +497,15 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
 
-                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3)
-                    canSpeed.toSpeed= 0;
-                else
+                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3) {
+                    canSpeed.toSpeed = 0;
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+
+                } else
                     canSpeed.toSpeed= vy==1?0:-Constants.UNIT_Y_SPEED_PER_TICK;
 
                 return;
@@ -490,6 +515,11 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                jumpState.canCancel = false;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
 
                 return;
             }
@@ -538,7 +568,7 @@ public class Sim_v3 {
         }
 
         if (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==2) {
-            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0) {
+            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0 || (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==2 && World.map[(int)(p.y+Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)]==2)) {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
@@ -559,6 +589,15 @@ public class Sim_v3 {
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
 
+                if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                }
+
                 return;
             }
 
@@ -566,6 +605,11 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
+
+                jumpState.maxTime = Constants.JUMP_TIME;
+                jumpState.canJump = true;
+                jumpState.canCancel = true;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
 
                 return;
             }
@@ -575,18 +619,29 @@ public class Sim_v3 {
                 canSpeed.can= true;
                 canSpeed.toSpeed= vy==-1?Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD:0;
 
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                jumpState.canCancel = false;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
                 return;
             }
         }
 
         if (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==3) {
-            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0) {
+            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0 || (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==2 && World.map[(int)(p.y+Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)]==2)) {
 
                 canSpeed.can= true;
 
-                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3)
-                    canSpeed.toSpeed= 0;
-                else
+                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3) {
+                    canSpeed.toSpeed = 0;
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+
+                } else
                     canSpeed.toSpeed= vy==1?0:-Constants.UNIT_Y_SPEED_PER_TICK;
 
                 return;
@@ -605,6 +660,15 @@ public class Sim_v3 {
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
 
+                if (vy!=1 && qy>=0 && p.y+Constants.UNIT_Y_SPEED_PER_TICK - (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK) < Constants.UNIT_Y_SPEED_PER_TICK) {
+                    p.y = (int) (p.y+Constants.UNIT_Y_SPEED_PER_TICK);
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+                }
+
                 return;
             }
 
@@ -612,6 +676,11 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= 0;
+
+                jumpState.maxTime = Constants.JUMP_TIME;
+                jumpState.canJump = true;
+                jumpState.canCancel = true;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
 
                 return;
             }
@@ -623,18 +692,29 @@ public class Sim_v3 {
 
                 if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3)
                     canSpeed.toSpeed= 0;
-                else
-                    canSpeed.toSpeed= Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+                else {
+                    canSpeed.toSpeed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+                    jumpState.canJump = true;
+                    jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                    jumpState.canCancel = false;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+                }
 
                 return;
             }
         }
 
         if (World.map[(int)(p.y)][(int)(p.x-Constants.UNIT_W2)]==4) {
-            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0) {
+            if (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==0 || (World.map[(int)(p.y)][(int)(p.x+Constants.UNIT_W2)]==2 && World.map[(int)(p.y+Constants.UNIT_Y_SPEED_PER_TICK)][(int)(p.x+Constants.UNIT_W2)]==2)) {
 
                 canSpeed.can= true;
-                canSpeed.toSpeed= vy==1?Constants.UNIT_Y_SPEED_PER_TICK:Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+                canSpeed.toSpeed= vy==1?Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD:Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                jumpState.canCancel = false;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
 
                 return;
             }
@@ -652,6 +732,11 @@ public class Sim_v3 {
                 canSpeed.can= true;
                 canSpeed.toSpeed= vy==-1?Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD:0;
 
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                jumpState.canCancel = false;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
                 return;
             }
 
@@ -660,10 +745,22 @@ public class Sim_v3 {
                 canSpeed.can= true;
                 //canSpeed.toSpeed= 0;//todo
 
-                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3)
-                    canSpeed.toSpeed= 0;
-                else
-                    canSpeed.toSpeed= Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+                if (World.map[(int)(p.y-(bottom?0:Constants.UNIT_H))][(int)(p.x)]==3 || World.map[(int)(p.y+Constants.UNIT_H2*(bottom?1:-1))][(int)(p.x)]==3) {
+                    canSpeed.toSpeed = 0;
+
+                    jumpState.maxTime = Constants.JUMP_TIME;
+                    jumpState.canJump = true;
+                    jumpState.canCancel = true;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK;
+
+                } else {
+                    canSpeed.toSpeed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+                    jumpState.canJump = true;
+                    jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                    jumpState.canCancel = false;
+                    jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+                }
 
                 return;
             }
@@ -672,6 +769,11 @@ public class Sim_v3 {
 
                 canSpeed.can= true;
                 canSpeed.toSpeed= Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
+
+                jumpState.canJump = true;
+                jumpState.maxTime = Constants.JUMP_TIME_PAD;
+                jumpState.canCancel = false;
+                jumpState.speed = Constants.UNIT_Y_SPEED_PER_TICK_JUMP_PAD;
 
                 return;
             }

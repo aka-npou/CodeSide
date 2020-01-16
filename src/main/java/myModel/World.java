@@ -165,8 +165,8 @@ public class World {
 
     }
 
-    public void setLiMap(Unit unit) {
-        Li.getLiMap(patencyMap, new Vec2Int((int)unit.position.x, (int)unit.position.y), liMap);
+    public void setLiMap(Vec2Double p) {
+        Li.getLiMap(patencyMap, new Vec2Int((int)p.x, (int)p.y), liMap);
     }
 
     public void print(int[][] _map, Debug debug) {
