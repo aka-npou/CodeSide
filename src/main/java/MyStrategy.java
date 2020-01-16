@@ -9,9 +9,9 @@ import strategy.*;
 
 public class MyStrategy {
 
-    AkaNpouStrategy akaNpouStrategy = new Strategy_v0();
+    AkaNpouStrategy akaNpouStrategy = new Strategy_v2();
 
-    public UnitAction getAction(Unit unit, Game game, Debug debug) {
+    public UnitAction getAction(UnitF unit, Game game, Debug debug) {
 
         UnitAction action = akaNpouStrategy.getAction(unit, game, debug);
 

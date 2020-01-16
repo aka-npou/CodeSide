@@ -23,6 +23,12 @@ public class Vec2Double {
         result.y = StreamUtil.readDouble(stream);
         return result;
     }
+    public static Vec2Float readFromF(java.io.InputStream stream) throws java.io.IOException {
+        Vec2Float result = new Vec2Float();
+        result.x = (float)StreamUtil.readDouble(stream);
+        result.y = (float)StreamUtil.readDouble(stream);
+        return result;
+    }
     public void writeTo(java.io.OutputStream stream) throws java.io.IOException {
         StreamUtil.writeDouble(stream, x);
         StreamUtil.writeDouble(stream, y);

@@ -185,89 +185,7 @@ public class Shoot {
 
     }
 
-    public void shoot(Unit unit, Game game, Debug debug, UnitAction action) {
-
-
-        if (unit.getWeapon() == null)
-            return;
-
-        //if (unit.getWeapon().getFireTimer() != null)
-        //    return;
-
-//        if (unit.getPosition().x- 0.5f -(int)unit.getPosition().x > 0.1f || unit.getPosition().y-(int)unit.getPosition().y > 0.1f)
-//            return;
-
-        System.out.println("p " + unit.getPosition().x + " " + unit.getPosition().y);
-
-        Unit enemy = null;
-
-        for (Unit u:game.getUnits()) {
-            if (u.getPlayerId() != unit.getPlayerId()) {
-                enemy = u;
-                break;
-            }
-        }
-
-        int dx = (int) Math.round(unit.getPosition().x - enemy.getPosition().x);
-        int dy = (int) Math.round(unit.getPosition().y - enemy.getPosition().y);
-        if (Math.abs(dx)>4 || Math.abs(dy)>4) {
-
-        } else {
-
-            if (unit.getPosition().x- 0.5f -(int)unit.getPosition().x > 0.1f) {
-                return;
-            }
-
-            if (unit.getPosition().y-(int)unit.getPosition().y > 0.1f) {
-                action.setJump(true);
-            }
-
-            boolean canShoot = true;
-
-            int kx=-1, ky=-1;
-
-            if (dx<0) {
-                kx=1;
-                dx=-dx;
-            }
-
-            if (dy<0) {
-                ky=1;
-                dy=-dy;
-            }
-
-            Vec2Int[] chain = shootCells[dy][dx].chain;
-
-            Vec2Int p = new Vec2Int((int)unit.getPosition().x, (int)unit.getPosition().y);
-
-            for (Vec2Int v:chain) {
-
-                debug.draw(new CustomData.Rect(new Vec2Float(p.x+kx*v.x + 0.4f, p.y+ky*v.y + 0.4f), new Vec2Float(0.2f, 0.2f), new ColorFloat(0,0,128,0.5f)));
-            }
-
-            debug.draw(new CustomData.Line(new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f), new Vec2Float(p.x+kx*dx + 0.5f, p.y+ky*dy + 0.5f), 0.1f, new ColorFloat(0,0,128, 0.5f)));
-            for (Vec2Int v:chain) {
-
-                if (World.map[p.y+ky*v.y][p.x+kx*v.x]==1) {
-                    canShoot = false;
-                    break;
-                }
-            }
-
-            if (canShoot) {
-                System.out.println("shoot " + kx*dx + " " + ky*dy);
-                action.setAim(new Vec2Double(kx*dx, ky*dy - 0.4f));
-                action.setShoot(true);
-                action.setVelocity(0);
-            }else {
-                action.setJump(true);
-            }
-
-        }
-        return;
-    }
-
-    public void canShoot(Unit unit, Unit enemy, Debug debug, UnitAction action) {
+    public void canShoot(UnitF unit, UnitF enemy, Debug debug, UnitAction action) {
 
 
         boolean canShoot = true;
@@ -279,9 +197,9 @@ public class Shoot {
         float dx, dy, a, l;
         Vec2Float v;
 
-        /*b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f);
-        dx = (float) (enemy.getPosition().x-0.5f - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+1.7f) - (unit.getPosition().y+0.9f));
+        /*b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
+        dx = (float) (enemy.position.x-0.5f - unit.position.x);
+        dy = (float) ((enemy.position.y+1.7f) - (unit.position.y+0.9f));
         //System.out.println("q " + dx + " " + dy);
 
         l = (float) Math.sqrt(dx*dx + dy*dy);
@@ -294,9 +212,9 @@ public class Shoot {
         }
 
 
-        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f);
-        dx = (float) (enemy.getPosition().x+0.5f - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+1.7f) - (unit.getPosition().y+0.9f));
+        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
+        dx = (float) (enemy.position.x+0.5f - unit.position.x);
+        dy = (float) ((enemy.position.y+1.7f) - (unit.position.y+0.9f));
         //System.out.println("q " + dx + " " + dy);
 
         l = (float) Math.sqrt(dx*dx + dy*dy);
@@ -308,9 +226,9 @@ public class Shoot {
             b.y+=v.y;
         }
 
-        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f);
-        dx = (float) (enemy.getPosition().x-0.5f - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+0.1f) - (unit.getPosition().y+0.9f));
+        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
+        dx = (float) (enemy.position.x-0.5f - unit.position.x);
+        dy = (float) ((enemy.position.y+0.1f) - (unit.position.y+0.9f));
         //System.out.println("q " + dx + " " + dy);
 
         l = (float) Math.sqrt(dx*dx + dy*dy);
@@ -322,9 +240,9 @@ public class Shoot {
             b.y+=v.y;
         }
 
-        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+0.9f);
-        dx = (float) (enemy.getPosition().x+0.5f - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+0.1f) - (unit.getPosition().y+0.9f));
+        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+0.9f);
+        dx = (float) (enemy.position.x+0.5f - unit.position.x);
+        dy = (float) ((enemy.position.y+0.1f) - (unit.position.y+0.9f));
         //System.out.println("q " + dx + " " + dy);
 
         l = (float) Math.sqrt(dx*dx + dy*dy);
@@ -338,12 +256,12 @@ public class Shoot {
 
         //todo если старый угол в цели то не менять
         //todo опережение еще добавить
-        b = new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2);
-        dx = (float) (enemy.getPosition().x - unit.getPosition().x);
-        dy = (float) ((enemy.getPosition().y+Constants.UNIT_H2) - (unit.getPosition().y+Constants.UNIT_H2));
+        b = new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2);
+        dx = (float) (enemy.position.x - unit.position.x);
+        dy = (float) ((enemy.position.y+Constants.UNIT_H2) - (unit.position.y+Constants.UNIT_H2));
 
         if (unit.weapon!=null)
-            System.out.println("la="+unit.weapon.lastAngle+" sa="+Math.atan2(dy, dx));
+            //System.out.println("la="+unit.weapon.lastAngle+" sa="+Math.atan2(dy, dx));
 
         if (unit.weapon!=null && ldx!=0 && ldy!=0) {
 
@@ -364,21 +282,21 @@ public class Shoot {
                 && by>=enemy.position.y
                 && by<=enemy.position.y+Constants.UNIT_H) {
 
-                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
+                boolean prevShoot = checkShoot(ldx, ldy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
 
                 if (prevShoot) {
                     dx = ldx;
                     dy = ldy;
 
-                    System.out.println("last angel");
+                    //System.out.println("last angel");
                 }
 
                 if (prevShoot || curShoot)
                     action.setShoot(true);
 
             } else {
-                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.getPosition().x, (float)unit.getPosition().y+Constants.UNIT_H2));
+                boolean curShoot = checkShoot(dx, dy, enemy, new Vec2Float((float)unit.position.x, (float)unit.position.y+Constants.UNIT_H2));
 
                 if (curShoot) {
                     action.setShoot(true);
@@ -388,11 +306,13 @@ public class Shoot {
 
         }
 
-        if (enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
+        //todo проверить что не попадет в стену при этом
+        //пока не будем так
+        /*if (enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
             dy= (float) (dy + Math.abs(dx)*Constants.BULLET_SPEED_PER_TICK);// 0.9f;//Math.abs(dy*0.3f);
         } else if (!enemy.jumpState.canJump && !enemy.jumpState.canCancel) {
             dy= (float) (dy - Math.abs(dx)*Constants.BULLET_SPEED_PER_TICK/2);//0.9f;//Math.abs(dy*0.3f);
-        }
+        }*/
 
         if (Constants.ON_DEBUG)
             debug.draw(new CustomData.Line(new Vec2Float(unit.position.x, unit.position.y+Constants.UNIT_H2), new Vec2Float(unit.position.x+dx, unit.position.y+dy+Constants.UNIT_H2), 0.1f, new ColorFloat(128, 128, 0, 0.5f)));
@@ -410,7 +330,7 @@ public class Shoot {
             if (Constants.ON_DEBUG)
                 debug.draw(new CustomData.Line(new Vec2Float(b.x, b.y), new Vec2Float(b.x+0.1f, b.y+0.1f), 0.1f, new ColorFloat(0, 128, 0, 0.5f)));
 
-            if (b.x>enemy.getPosition().x-0.5f && b.x<enemy.getPosition().x+0.5f && b.y>enemy.getPosition().y && b.y<enemy.getPosition().y+1.8f) {
+            if (b.x>enemy.position.x-0.5f && b.x<enemy.position.x+0.5f && b.y>enemy.position.y && b.y<enemy.position.y+1.8f) {
                 lShoot = true;
                 break;
             }
@@ -420,7 +340,7 @@ public class Shoot {
         }
 
         if (Constants.ON_DEBUG)
-            debug.draw(new CustomData.Rect(new Vec2Float((float)enemy.getPosition().x-0.45f, (float)enemy.getPosition().y), new Vec2Float(0.9f, 1.8f), new ColorFloat(canShoot&&lShoot?0:255, canShoot&&lShoot?255:0,0,0.5f)));
+            debug.draw(new CustomData.Rect(new Vec2Float((float)enemy.position.x-0.45f, (float)enemy.position.y), new Vec2Float(0.9f, 1.8f), new ColorFloat(canShoot&&lShoot?0:255, canShoot&&lShoot?255:0,0,0.5f)));
 
         if (canShoot && lShoot) {
             action.setShoot(true);
@@ -433,7 +353,7 @@ public class Shoot {
         ldy=dy;
     }
 
-    private boolean checkShoot(float dx, float dy, Unit enemy, Vec2Float b) {
+    private boolean checkShoot(float dx, float dy, UnitF enemy, Vec2Float b) {
 
         boolean canShoot = true;
         boolean lShoot = false;
@@ -452,7 +372,7 @@ public class Shoot {
                 break;
             }
 
-            if (b.x>enemy.getPosition().x-0.5f && b.x<enemy.getPosition().x+0.5f && b.y>enemy.getPosition().y && b.y<enemy.getPosition().y+1.8f) {
+            if (b.x>enemy.position.x-0.5f && b.x<enemy.position.x+0.5f && b.y>enemy.position.y && b.y<enemy.position.y+1.8f) {
                 lShoot = true;
                 break;
             }

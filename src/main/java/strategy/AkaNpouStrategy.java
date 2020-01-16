@@ -1,9 +1,6 @@
 package strategy;
 
-import model.Debug;
-import model.Game;
-import model.Unit;
-import model.UnitAction;
+import model.*;
 import myModel.Dodge;
 import myModel.Shoot;
 import myModel.UnitStatus;
@@ -25,5 +22,7 @@ public abstract class AkaNpouStrategy {
 
     UnitStatus unitStatus = UnitStatus.Wait;
 
-    public abstract UnitAction getAction(Unit unit, Game game, Debug debug);
+    UnitF nearestEnemy = null;
+
+    public abstract UnitAction getAction(UnitF unit, Game game, Debug debug);
 }

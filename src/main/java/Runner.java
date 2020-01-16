@@ -33,7 +33,7 @@ public class Runner {
                 break;
             }
             Map<Integer, model.UnitAction> actions = new HashMap<>();
-            for (model.Unit unit : playerView.getGame().getUnits()) {
+            for (model.UnitF unit : playerView.getGame().getUnits()) {
                 if (unit.getPlayerId() == playerView.getMyId()) {
                     actions.put(unit.getId(), myStrategy.getAction(unit, playerView.getGame(), debug));
                 }

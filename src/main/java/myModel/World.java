@@ -10,10 +10,11 @@ import java.util.LinkedList;
 public class World {
 
     public static int[][] map;
+    public static int[][] liMap;
     public static int[][] patencyMap;
     public static int[][] reachabilityMap;
-    public int x;
-    public int y;
+    public static int x;
+    public static int y;
 
     //EMPTY(0)
     //WALL(1)
@@ -37,7 +38,7 @@ public class World {
 
     }
 
-    public void setPatencyMap(Level level, Vec2Double unit) {
+    public void setPatencyMap(Level level, Vec2Float unit) {
 
         patencyMap = new int[y][x];
 
@@ -164,7 +165,9 @@ public class World {
 
     }
 
-
+    public void setLiMap(UnitF unit) {
+        Li.getLiMap(patencyMap, new Vec2Int((int)unit.position.x, (int)unit.position.y), liMap);
+    }
 
     public void print(int[][] _map, Debug debug) {
         if (!Constants.ON_DEBUG)
@@ -173,13 +176,15 @@ public class World {
         for (int yy=0; yy<y; yy++) {
             for (int xx=0; xx<x; xx++) {
 
-                System.out.print(_map[yy][xx]);
+                System.out.print(_map[World.y-yy-1][xx]);
+                System.out.print("\t");
 
             }
             System.out.println("");
         }
 
-        ColorFloat yes = new ColorFloat(0,255,0,0.5f);
+        System.out.println("");
+        /*ColorFloat yes = new ColorFloat(0,255,0,0.5f);
         ColorFloat no = new ColorFloat(255,0,0,0.5f);
         for (int yy=0; yy<y; yy++) {
             for (int xx=0; xx<x; xx++) {
@@ -187,7 +192,7 @@ public class World {
                 debug.draw(new CustomData.Rect(new Vec2Float(xx+0.1f,yy+0.1f), new Vec2Float(0.8f,0.8f), _map[yy][xx]==1?yes:no));
 
             }
-        }
+        }*/
 
     }
 }

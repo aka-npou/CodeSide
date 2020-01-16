@@ -74,9 +74,9 @@ public class GenShootChain {
             }
         }
 
-        for (Bullet b:game.getBullets()) {
+        for (BulletF b:game.getBullets()) {
             //System.out.println("b " + (b.getPosition().getX()) + " " + (b.getPosition().getY()));
-            chain.add(new Vec2Int((int)(b.getPosition().getX()), (int)(b.getPosition().getY())));
+            chain.add(new Vec2Int((int)(b.position.x), (int)(b.position.y)));
         }
     }
 }
